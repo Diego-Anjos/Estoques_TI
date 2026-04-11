@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+oracledb
+python-dotenv
+pydantic
+pydantic-settings
+passlib[bcrypt]
+python-multipart
