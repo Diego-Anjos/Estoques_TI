@@ -1,270 +1,187 @@
-# 🚀 Estoque TI API
+# Estoques TI
 
-Sistema completo de gestão de TI com API REST desenvolvida em Python com FastAPI e Oracle Database.
+Sistema de gestão de estoque e ativos de TI — monorepo com API REST, banco Oracle e interface web.
 
-## 📋 Funcionalidades
+Controle de itens, locais, patrimônios, licenças de software, ocorrências e usuários, com auditoria de criação e alteração.
 
-- **Controle de Estoque** - Gerenciamento de itens por quantidade (cabos, mousepad, etc.)
-- **Controle de Patrimônio** - Itens serializados (PC, Notebook, Monitor, Impressora, Switch, etc.)
-- **Controle de Licenças** - Gerenciamento de software (Office, CoopSys, etc.)
-- **Sistema de Ocorrências** - Chamados com rastreamento completo
-- **Gestão de Usuários** - Autenticação e controle de acesso
-- **Auditoria Completa** - Registro de quem criou/alterou cada registro
+---
 
-## 🛠️ Tecnologias
+## Tecnologias
 
-- **Python 3.11+**
-- **FastAPI** - Framework web moderno e rápido
-- **Oracle Database** - Banco de dados corporativo
-- **Pydantic** - Validação de dados
-- **Uvicorn** - Servidor ASGI
-- **Bcrypt** - Hash de senhas
+| Camada | Stack |
+|--------|--------|
+| **Backend** | Python, **FastAPI**, Uvicorn, Pydantic, Passlib (bcrypt) |
+| **Banco de dados** | **Oracle Database** (Oracle XE via Docker) |
+| **Frontend** | **Vite** + páginas estáticas (HTML / CSS / JavaScript) |
 
-## 📁 Estrutura do Projeto
+---
 
-```
-estoque-ti-api/
-├── app/
-│   ├── main.py                 # Aplicação principal
-│   ├── core/                   # Configurações centrais
-│   │   ├── config.py          # Configurações (.env)
-│   │   ├── database.py        # Pool de conexão Oracle
-│   │   └── security.py        # Segurança (hash de senha)
-│   ├── schemas/               # DTOs Pydantic
-│   │   ├── usuario.py
-│   │   ├── item.py
-│   │   ├── patrimonio.py
-│   │   ├── software.py
-│   │   └── ocorrencia.py
-│   ├── repositories/          # Acesso ao banco de dados
-│   │   ├── usuario_repo.py
-│   │   ├── item_repo.py
-│   │   ├── estoque_repo.py
-│   │   ├── patrimonio_repo.py
-│   │   ├── software_repo.py
-│   │   └── ocorrencia_repo.py
-│   ├── services/              # Lógica de negócio
-│   │   ├── usuario_service.py
-│   │   ├── estoque_service.py
-│   │   ├── patrimonio_service.py
-│   │   ├── software_service.py
-│   │   └── ocorrencia_service.py
-│   └── routers/               # Endpoints da API
-│       ├── usuario_router.py
-│       ├── item_router.py
-│       ├── estoque_router.py
-│       ├── patrimonio_router.py
-│       ├── software_router.py
-│       └── ocorrencia_router.py
-├── .env                       # Variáveis de ambiente
-├── requirements.txt           # Dependências Python
-└── README.md                  # Este arquivo
+## Estrutura do monorepo
+
+```text
+Estoques TI/
+├── Backend/          # API FastAPI + scripts Oracle
+│   ├── app/          # Código da aplicação
+│   ├── docker-compose.yml
+│   ├── init_db.py
+│   ├── requirements.txt
+│   └── .env.example
+├── FrontEnd/         # Interface Vite (páginas estáticas)
+│   ├── pages/
+│   ├── shared/
+│   ├── package.json
+│   └── .env.example
+└── README.md         # Este arquivo
 ```
 
-## 🚀 Instalação e Configuração
+---
 
-### 1. Pré-requisitos
+## Pré-requisitos
 
-- Python 3.11 ou superior
-- Oracle Database (com as tabelas criadas)
+- **Docker** e Docker Compose
+- **Python** 3.11+ (ou superior)
+- **Node.js** 18+ (com npm)
 - Git (opcional)
 
-### 2. Clone ou baixe o projeto
+---
+
+## Como rodar o projeto localmente
+
+Siga as **3 etapas** abaixo, nesta ordem.
+
+### Passo 1: Banco de Dados
+
+Suba o Oracle XE com Docker e inicialize as tabelas.
+
+**1.1.** Entre na pasta do backend e inicie o container:
 
 ```bash
-cd estoque-ti-api
+cd Backend
+docker-compose up -d
 ```
 
-### 3. Crie o ambiente virtual
+Aguarde o Oracle ficar pronto (na primeira vez pode levar alguns minutos). O serviço expõe a porta **1521**.
+
+**1.2.** Configure as variáveis de ambiente do backend (valores alinhados ao `docker-compose.yml`):
+
+```bash
+# Ainda em Backend/
+cp .env.example .env
+```
+
+Confira se o `.env` contém algo equivalente a:
+
+```env
+ORACLE_USER=estoque_user
+ORACLE_PASSWORD=estoque_senha
+ORACLE_DSN=localhost:1521/XEPDB1
+```
+
+**1.3.** Crie (ou atualize) as tabelas, sequences e triggers:
+
+```bash
+# Com o ambiente virtual do Passo 2 já ativo, ou após instalar as deps:
+python init_db.py
+```
+
+> **Dica:** se preferir, execute o `init_db.py` logo após instalar as dependências do Passo 2 (precisa do `oracledb` e do `.env`).
+
+---
+
+### Passo 2: Backend
+
+**2.1.** Na pasta `Backend`, crie e ative o ambiente virtual:
 
 **Windows (PowerShell):**
+
 ```powershell
+cd Backend
 py -3.11 -m venv .venv
-.venv\Scripts\Activate.ps1
+.\.venv\Scripts\Activate.ps1
 ```
 
-**Linux/Mac:**
+**Linux / macOS:**
+
 ```bash
+cd Backend
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-### 4. Instale as dependências
+**2.2.** Instale as dependências:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 5. Configure o arquivo .env
+**2.3.** (Se ainda não rodou) inicialize o schema Oracle:
 
-Edite o arquivo `.env` na raiz do projeto com suas credenciais do Oracle:
-
-```env
-# Configurações do Oracle Database
-ORACLE_USER=seu_usuario
-ORACLE_PASSWORD=sua_senha
-ORACLE_DSN=host:1521/servico
-ORACLE_POOL_MIN=1
-ORACLE_POOL_MAX=5
-ORACLE_POOL_INC=1
-
-# Configurações da API
-API_TITLE=Estoque TI API
-API_VERSION=1.0.0
-API_PREFIX=/api
+```bash
+python init_db.py
 ```
 
-**Exemplo de DSN:**
-- `192.168.0.10:1521/ORCLPDB1`
-- `localhost:1521/XE`
-
-### 6. Crie as tabelas no Oracle
-
-Você precisa criar as seguintes tabelas no Oracle Database:
-
-- `USUARIOS` - Usuários do sistema
-- `ITENS` - Catálogo de itens
-- `ESTOQUE` - Controle de quantidade
-- `PATRIMONIO` - Itens serializados
-- `SOFTWARE` - Licenças de software
-- `OCORRENCIAS` - Chamados
-
-**Estrutura básica das tabelas:**
-
-Cada tabela deve ter os campos de auditoria:
-- `CRIADO_EM` (TIMESTAMP)
-- `CRIADO_POR` (NUMBER)
-- `ALTERADO_EM` (TIMESTAMP)
-- `ALTERADO_POR` (NUMBER)
-
-## ▶️ Executando a API
-
-### Modo desenvolvimento (com reload automático):
+**2.4.** Inicie a API com Uvicorn:
 
 ```bash
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Ou simplesmente:
+A API estará em:
 
-```bash
-python -m app.main
-```
-
-### Modo produção:
-
-```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
-```
-
-A API estará disponível em: **http://localhost:8000**
-
-## 📚 Documentação da API
-
-Após iniciar a aplicação, acesse:
-
-- **Swagger UI (interativo):** http://localhost:8000/docs
-- **ReDoc (documentação):** http://localhost:8000/redoc
-
-## 🔌 Endpoints Principais
-
-### Usuários (`/api/usuarios`)
-- `POST /` - Criar usuário
-- `POST /login` - Login
-- `GET /` - Listar usuários
-- `GET /{id}` - Buscar usuário
-- `PUT /{id}` - Atualizar usuário
-- `DELETE /{id}` - Deletar usuário
-
-### Itens (`/api/itens`)
-- `POST /` - Criar item
-- `GET /` - Listar itens (filtro por tipo)
-- `GET /{id}` - Buscar item
-- `PUT /{id}` - Atualizar item
-- `DELETE /{id}` - Deletar item
-
-### Estoque (`/api/estoque`)
-- `POST /` - Criar registro de estoque
-- `GET /` - Listar estoque
-- `GET /{id}` - Buscar estoque
-- `POST /entrada` - Entrada de itens
-- `POST /saida` - Saída de itens
-- `DELETE /{id}` - Deletar estoque
-
-### Patrimônio (`/api/patrimonio`)
-- `POST /` - Criar patrimônio
-- `GET /` - Listar patrimônios (filtro por status)
-- `GET /{id}` - Buscar patrimônio
-- `PUT /{id}` - Atualizar patrimônio
-- `DELETE /{id}` - Deletar patrimônio
-
-### Software/Licenças (`/api/software`)
-- `POST /` - Criar software
-- `GET /` - Listar softwares
-- `GET /{id}` - Buscar software
-- `PUT /{id}` - Atualizar software
-- `POST /{id}/alocar` - Alocar licenças
-- `POST /{id}/liberar` - Liberar licenças
-- `DELETE /{id}` - Deletar software
-
-### Ocorrências (`/api/ocorrencias`)
-- `POST /` - Criar ocorrência
-- `GET /` - Listar ocorrências (filtros por status/tipo)
-- `GET /{id}` - Buscar ocorrência
-- `PUT /{id}` - Atualizar ocorrência
-- `POST /{id}/fechar` - Fechar ocorrência
-- `DELETE /{id}` - Deletar ocorrência
-
-## ✅ Validações Implementadas
-
-- ✅ **Estoque não fica negativo** - Validação na saída de itens
-- ✅ **Licenças não excedem pool** - Validação ao alocar licenças
-- ✅ **Número de série único** - Validação no patrimônio
-- ✅ **Email único** - Validação de usuários
-- ✅ **Senhas com hash bcrypt** - Segurança
-
-## 🔒 Segurança
-
-- Senhas armazenadas com hash bcrypt
-- Validação de dados com Pydantic
-- Tratamento de erros apropriado
-- Pool de conexões gerenciado
-
-## 🐛 Troubleshooting
-
-### Erro de conexão com Oracle
-
-Verifique:
-1. Credenciais no arquivo `.env`
-2. Oracle Database está rodando
-3. Firewall/rede permite conexão
-4. DSN está correto (formato: `host:porta/servico`)
-
-### Erro ao importar módulos
-
-```bash
-# Reinstale as dependências
-pip install -r requirements.txt --force-reinstall
-```
-
-### Erro de permissão no PowerShell
-
-```powershell
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-```
-
-## 📝 Licença
-
-Este projeto é de uso interno.
-
-## 👨‍💻 Desenvolvido com
-
-- FastAPI
-- Python
-- Oracle Database
-- ❤️ e ☕
+- **API:** http://localhost:8000  
+- **Swagger:** http://localhost:8000/docs  
+- **ReDoc:** http://localhost:8000/redoc  
 
 ---
 
-**Versão:** 1.0.0  
-**Data:** 2026
+### Passo 3: Frontend
+
+Em **outro terminal**, configure e suba o Vite.
+
+**3.1.** Entre na pasta do frontend e instale as dependências:
+
+```bash
+cd FrontEnd
+npm install
+```
+
+**3.2.** Configure a URL da API:
+
+```bash
+cp .env.example .env
+```
+
+O padrão aponta para o backend local:
+
+```env
+VITE_API_URL=http://localhost:8000/api
+```
+
+**3.3.** Inicie o servidor de desenvolvimento:
+
+```bash
+npm run dev
+```
+
+O frontend abre em **http://localhost:5173** (login em `/pages/auth/login/index.html`).
+
+---
+
+## Resumo rápido
+
+| Etapa | Comando principal | URL / porta |
+|-------|-------------------|-------------|
+| **1. Banco** | `docker-compose up -d` + `python init_db.py` | `1521` |
+| **2. Backend** | `uvicorn app.main:app --reload --host 0.0.0.0 --port 8000` | http://localhost:8000 |
+| **3. Frontend** | `npm run dev` | http://localhost:5173 |
+
+---
+
+## Documentação adicional
+
+- Backend: pasta `Backend/` (API, Oracle, migrações)
+- Frontend: `FrontEnd/README.md` e `FrontEnd/docs/STRUCTURE.md`
+
+---
+
+**Versão:** 1.0.0 · Uso interno
