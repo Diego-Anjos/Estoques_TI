@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: estoques-ti-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.2
+      - key: ORACLE_USER
+        sync: false
+      - key: ORACLE_PASSWORD
+        sync: false
+      - key: ORACLE_DSN
+        sync: false
+      - key: API_TITLE
+        value: Estoque TI API
+      - key: API_VERSION
+        value: 1.0.0
+      - key: API_PREFIX
+        value: /api

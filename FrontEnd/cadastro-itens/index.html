@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Itens - Sistema Controle de Estoque</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="left-section">
+                <span class="greeting">Olá, Maria</span>
+            </div>
+            <div class="center-section">
+                <nav class="breadcrumb" id="breadcrumb">
+                    <span class="breadcrumb-item active">Cadastro de Itens</span>
+                </nav>
+            </div>
+            <div class="right-section">
+                <button class="theme-toggle" id="theme-toggle" title="Alternar tema">
+                    <span class="theme-icon">◐</span>
+                </button>
+                <button class="logout-btn" id="logout-btn" title="Sair do sistema">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <path d="M12 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <div class="user-dropdown dropdown" id="user-dropdown">
+                    <button class="user-btn dropdown-btn" id="user-btn">
+                        <span class="user-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                                <circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="2"/>
+                                <path d="M6.168 18.849A6 6 0 0 1 12 16a6 6 0 0 1 5.832 2.849" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </span>
+                    </button>
+                    <div class="dropdown-content" id="user-dropdown-content">
+                        <a href="#" class="dropdown-item" id="perfil-btn">
+                            <span class="item-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="12" cy="8" r="5" stroke="currentColor" stroke-width="2"/>
+                                    <path d="M20 21a8 8 0 0 0-16 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </span>
+                            Perfil
+                        </a>
+                        <a href="#" class="dropdown-item" id="config-btn">
+                            <span class="item-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" stroke="currentColor" stroke-width="2"/>
+                                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                                </svg>
+                            </span>
+                            Configurações
+                        </a>
+                        <a href="#" class="dropdown-item" id="sair-btn">
+                            <span class="item-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <polyline points="16,17 21,12 16,7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                            Sair
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <!-- Header com título e botões -->
+        <div class="filters-header">
+            <h2 class="page-title">Cadastro de Itens</h2>
+            <div class="header-buttons">
+                <button class="btn-export-item" id="btn-voltar-dashboard-itens" title="Voltar ao Dashboard">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 12H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <button class="btn-add-item" id="btn-adicionar-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Filtros principais -->
+        <div class="main-filters" id="main-filters-itens">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label>Nome do Item:</label>
+                    <input type="text" class="filter-input-new" placeholder="Digite o nome do item" id="nome-item-input">
+                </div>
+                
+                <div class="filter-group">
+                    <label>Tipo:</label>
+                    <select class="filter-select-new" id="tipo-item-select">
+                        <option value="">Todos os tipos</option>
+                        <option value="1">Material de Construção</option>
+                        <option value="2">Equipamento de Informática</option>
+                        <option value="3">Material de Escritório</option>
+                        <option value="4">Ferramentas Manuais</option>
+                        <option value="5">Componente Eletrônico</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Status:</label>
+                    <select class="filter-select-new" id="status-item-select">
+                        <option value="">Todos os status</option>
+                        <option value="Ativo">Ativo</option>
+                        <option value="Inativo">Inativo</option>
+                    </select>
+                </div>
+                
+                <div class="filter-actions">
+                    <button class="btn-loading" id="btn-buscar-itens">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+                            <path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Buscar
+                    </button>
+                    <button class="btn-clear" id="btn-limpar-itens">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Limpar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filtro avançado -->
+            <div class="advanced-filter">
+                <button class="btn-advanced-filter" id="btn-filtro-avancado-itens">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Filtro avançado
+                </button>
+            </div>
+        </div>
+
+        <!-- Área de conteúdo -->
+        <div class="content-area">
+            <!-- Header da tabela -->
+            <div class="table-header">
+                <div class="table-header-content">
+                    <div class="table-pagination-top">
+                        <div class="pagination-controls">
+                            <button class="pagination-btn">«</button>
+                            <button class="pagination-btn">‹</button>
+                            <button class="pagination-btn active">1</button>
+                            <button class="pagination-btn">›</button>
+                            <button class="pagination-btn">»</button>
+                        </div>
+                        <div class="page-controls">
+                            <span>Ir para:</span>
+                            <input type="number" class="page-input" value="1" min="1">
+                        </div>
+                        <div class="items-per-page">
+                            <span>Itens por página:</span>
+                            <select class="items-select">
+                                <option value="10" selected>10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela -->
+            <div class="itens-table-container">
+                <table class="itens-table" id="itens-table">
+                    <thead>
+                        <tr>
+                            <th class="checkbox-col">
+                                <input type="checkbox" id="select-all-itens">
+                            </th>
+                            <th class="id-col">ID</th>
+                            <th class="name-col">Nome do Item</th>
+                            <th class="type-col">Tipo</th>
+                            <th class="description-col">Descrição</th>
+                            <th class="quantity-col">Quantidade</th>
+                            <th class="unit-col">Unidade</th>
+                            <th class="location-col">Local</th>
+                            <th class="status-col">Status</th>
+                            <th class="date-creation-col">Data Criação</th>
+                            <th class="created-by-col">Criado Por</th>
+                            <th class="actions-col">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itens-tbody">
+                        <!-- Itens serão inseridos aqui via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Footer da tabela -->
+            <div class="table-footer">
+                <div class="table-footer-content">
+                    <div class="table-pagination-bottom">
+                        <div class="pagination-controls">
+                            <button class="pagination-btn">«</button>
+                            <button class="pagination-btn">‹</button>
+                            <button class="pagination-btn active">1</button>
+                            <button class="pagination-btn">›</button>
+                            <button class="pagination-btn">»</button>
+                        </div>
+                        <div class="page-controls">
+                            <span>Ir para:</span>
+                            <input type="number" class="page-input" value="1" min="1">
+                        </div>
+                        <div class="items-per-page">
+                            <span>Itens por página:</span>
+                            <select class="items-select">
+                                <option value="10" selected>10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal para adicionar/editar item -->
+    <div id="modal-item" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-item-title">Adicionar Item</h3>
+                <span class="close" id="close-item">&times;</span>
+            </div>
+            <form id="item-form" class="item-form">
+                <div class="form-group">
+                    <label for="nome-item">Nome do Item:</label>
+                    <input type="text" id="nome-item" name="nome-item" required placeholder="Ex: Martelo de Unha">
+                </div>
+                <div class="form-group">
+                    <label for="tipo-item">Tipo:</label>
+                    <select id="tipo-item" name="tipo-item" required>
+                        <option value="">Selecione um tipo</option>
+                        <option value="1">Material de Construção</option>
+                        <option value="2">Equipamento de Informática</option>
+                        <option value="3">Material de Escritório</option>
+                        <option value="4">Ferramentas Manuais</option>
+                        <option value="5">Componente Eletrônico</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="descricao-item">Descrição:</label>
+                    <textarea id="descricao-item" name="descricao-item" rows="3" placeholder="Descrição detalhada do item"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="quantidade-item">Quantidade:</label>
+                    <input type="number" id="quantidade-item" name="quantidade-item" min="0" required placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label for="unidade-item">Unidade:</label>
+                    <select id="unidade-item" name="unidade-item" required>
+                        <option value="">Selecione uma unidade</option>
+                        <option value="UN">Unidade</option>
+                        <option value="PC">Peça</option>
+                        <option value="KG">Quilograma</option>
+                        <option value="LT">Litro</option>
+                        <option value="MT">Metro</option>
+                        <option value="M2">Metro Quadrado</option>
+                        <option value="M3">Metro Cúbico</option>
+                        <option value="CX">Caixa</option>
+                        <option value="PCT">Pacote</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="local-item">Local:</label>
+                    <select id="local-item" name="local-item" required>
+                        <option value="">Selecione um local</option>
+                        <option value="1">Depósito Central</option>
+                        <option value="2">Armazém Norte</option>
+                        <option value="3">Galpão Sul</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="status-item">Status:</label>
+                    <select id="status-item" name="status-item" required>
+                        <option value="Ativo">Ativo</option>
+                        <option value="Inativo">Inativo</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" id="btn-cancelar-item">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de confirmação de exclusão para itens -->
+    <div id="modal-confirmacao-item" class="modal">
+        <div class="modal-content modal-confirmacao-content">
+            <div class="modal-header-confirmacao">
+                <div class="warning-icon">⚠️</div>
+                <h3>Confirmar Exclusão</h3>
+            </div>
+            <div class="modal-body-confirmacao">
+                <p>Tem certeza que deseja excluir este item?</p>
+                <p class="warning-text">Esta ação não poderá ser desfeita.</p>
+            </div>
+            <div class="form-actions-confirmacao">
+                <button type="button" class="btn-warning-improved" id="btn-cancelar-exclusao-item">
+                    <span class="btn-icon">←</span>
+                    Voltar
+                </button>
+                <button type="button" class="btn-danger-improved" id="btn-confirmar-exclusao-item">
+                    <span class="btn-icon">🗑️</span>
+                    Sim, excluir
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

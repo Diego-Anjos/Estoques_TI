@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Estoque - Sistema Controle de Estoque</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="left-section">
+                <span class="greeting">Ola, Maria</span>
+            </div>
+            <div class="center-section">
+                <nav class="breadcrumb">
+                    <span class="breadcrumb-item active">Controle de Estoque</span>
+                </nav>
+            </div>
+            <div class="right-section">
+                <button class="theme-toggle" id="theme-toggle" title="Alternar tema">
+                    <span class="theme-icon">◐</span>
+                </button>
+                <button class="logout-btn" id="logout-btn" title="Sair do sistema">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <path d="M12 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <div class="user-dropdown dropdown" id="user-dropdown">
+                    <button class="user-btn dropdown-btn" id="user-btn">
+                        <span class="user-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                                <circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="2"/>
+                                <path d="M6.168 18.849A6 6 0 0 1 12 16a6 6 0 0 1 5.832 2.849" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </span>
+                    </button>
+                    <div class="dropdown-content">
+                        <a href="#" class="dropdown-item" id="perfil-btn"><span class="item-icon">👤</span>Perfil</a>
+                        <a href="#" class="dropdown-item" id="config-btn"><span class="item-icon">⚙️</span>Configuracoes</a>
+                        <a href="#" class="dropdown-item" id="sair-btn"><span class="item-icon">🚪</span>Sair</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="filters-header">
+            <h2 class="page-title">Movimentacoes de Estoque</h2>
+            <div class="header-buttons">
+                <button class="btn-export-estoque" id="btn-voltar-dashboard-estoque" title="Voltar ao Dashboard">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 12H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <button class="btn-add-estoque" id="btn-adicionar-movimento" title="Adicionar movimento">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="main-filters">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label>Nome do Item:</label>
+                    <input type="text" class="filter-input-new" id="filtro-item" placeholder="Digite o nome do item">
+                </div>
+                <div class="filter-group">
+                    <label>Tipo:</label>
+                    <select class="filter-select-new" id="filtro-tipo">
+                        <option value="">Todos</option>
+                        <option value="entrada">Entrada</option>
+                        <option value="saida">Saida</option>
+                    </select>
+                </div>
+                <div class="filter-actions">
+                    <button class="btn-loading" id="btn-buscar-estoque">Buscar</button>
+                    <button class="btn-clear" id="btn-limpar-estoque">Limpar</button>
+                </div>
+            </div>
+            <div class="advanced-filter">
+                <button class="btn-advanced-filter" id="btn-filtro-avancado-estoque">Filtro avancado</button>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <div class="saldo-card">
+                <h3>Saldo por Item</h3>
+                <div id="saldo-vazio">Nenhum item registrado.</div>
+                <table class="itens-table hidden" id="saldo-tabela">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Saldo atual</th>
+                        </tr>
+                    </thead>
+                    <tbody id="saldo-body"></tbody>
+                </table>
+            </div>
+
+            <div class="itens-table-container">
+                <table class="itens-table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Item</th>
+                            <th>Tipo</th>
+                            <th>Quantidade</th>
+                            <th>Observacao</th>
+                        </tr>
+                    </thead>
+                    <tbody id="movimentos-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div id="modal-movimento" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-movimento-title">Adicionar Movimento</h3>
+                <span class="close" id="close-movimento">&times;</span>
+            </div>
+            <form id="movimento-form" class="item-form">
+                <div class="form-group">
+                    <label for="item">Nome do Item:</label>
+                    <input type="text" id="item" required maxlength="80">
+                </div>
+                <div class="form-group">
+                    <label for="tipo">Tipo:</label>
+                    <select id="tipo" required>
+                        <option value="">Selecione</option>
+                        <option value="entrada">Entrada</option>
+                        <option value="saida">Saida</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="quantidade">Quantidade:</label>
+                    <input type="number" id="quantidade" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="observacao">Observacao:</label>
+                    <textarea id="observacao" rows="3"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" id="btn-cancelar-movimento">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

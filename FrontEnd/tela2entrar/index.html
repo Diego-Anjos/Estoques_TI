@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+    <head> 
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Tela de Login</title>
+        <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+
+    <!-- LADO ESQUERDO -->
+    <div class="left">
+        <div class="logo">
+            <div class="logo-icon"></div>
+            <span> Sistema Controle de Estoque </span>
+        </div>
+          <div class="illustration">
+            <img src="tela inicial.png" alt="Tela Inicial" class="initial-screen-image">
+        </div>
+        </div>
+       
+        <!-- LADO DIREITO -->
+    <div class="right">
+        <div class="form-box">
+            <h1>Bem-vindo!</h1>
+            <p>Entre na sua conta</p>
+
+         <form>
+                <label for="usuario-login">Nome ou Email</label>
+                <input type="text" id="usuario-login" name="usuario-login" placeholder="Digite seu nome ou email" required>
+
+                <label for="senha-login">Senha</label>
+                <input type="password" id="senha-login" name="senha-login" placeholder="Digite sua senha" required minlength="6">
+
+                <button type="submit">Entrar</button>
+            </form>
+
+            <div class="forgot-password">
+                <a href="#">Esqueceu sua senha?</a>
+            </div>
+
+            <div class="signup-link">
+                Não tem uma conta? <a href="../tela1/index.html">Cadastrar</a>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const usuarioInput = document.getElementById('usuario-login');
+    const senhaInput = document.getElementById('senha-login');
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const usuario = usuarioInput.value.trim();
+        const senha = senhaInput.value.trim();
+
+        // Aceitar qualquer entrada (não vazia)
+        if (usuario && senha) {
+            // Simular login bem-sucedido
+            localStorage.setItem('usuarioLogado', usuario);
+            
+            // Redirecionar para o dashboard
+            window.location.href = '../tela1/paginainicial/index.html';
+        } else {
+            // Mostrar mensagem se algum campo estiver vazio
+            alert('Por favor, preencha todos os campos.');
+        }
+    });
+
+    // Permitir login ao pressionar Enter em qualquer campo
+    [usuarioInput, senhaInput].forEach(input => {
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                form.dispatchEvent(new Event('submit'));
+            }
+        });
+    });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+    <head> 
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Tela de Cadastro</title>
+        <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+
+    <!-- LADO ESQUERDO -->
+    <div class="left">
+        <div class="logo">
+            <div class="logo-icon"></div>
+            <span> Sistema Controle de Estoque </span>
+        </div>
+          <div class="illustration">
+            <img src="tela inicial.png" alt="Tela Inicial" class="initial-screen-image">
+        </div>
+        </div>
+       
+        <!-- LADO DIREITO -->
+    <div class="right">
+        <div class="form-box">
+            <h1>Olá!</h1>
+            <p>Crie sua conta</p>
+
+         <form>
+                <label for="nome-completo">Nome Completo</label>
+                <input type="text" id="nome-completo" name="nome-completo" placeholder="Digite seu nome" required>
+
+                <label for="email-cadastro">Email</label>
+                <input type="email" id="email-cadastro" name="email-cadastro" placeholder="Digite seu email" required>
+
+                <label for="senha-cadastro">Senha</label>
+                <input type="password" id="senha-cadastro" name="senha-cadastro" placeholder="Digite sua senha" required minlength="6">
+
+                <label for="confirmar-senha">Confirmar Senha</label>
+                <input type="password" id="confirmar-senha" name="confirmar-senha" placeholder="Confirme sua senha" required minlength="6">
+
+                <button type="submit">Cadastrar</button>
+            </form>
+
+            <div class="login-link">
+                Já tem uma conta? <a href="../tela2entrar/index.html">Entrar</a>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

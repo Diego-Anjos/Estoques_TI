@@ -1,0 +1,141 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f4f4fb;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* CONTAINER PRINCIPAL */
+.container {
+    width: 1000px;
+    height: 600px;
+    display: flex;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+}
+
+/* LADO ESQUERDO */
+.left {
+    flex: 1;
+    background: #ffffff;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+    color: #333333;
+}
+
+.logo-icon {
+    width: 25px;
+    height: 25px;
+    background: linear-gradient(45deg, #ff7a1a, #ff9f43);
+    border-radius: 6px;
+    margin-right: 10px;
+}
+
+.illustration {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+}
+
+.initial-screen-image {
+    max-width: 100%;
+    max-height: 350px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+}
+
+/* LADO DIREITO */
+.right {
+    flex: 1;
+    background: #3d3a84;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.form-box {
+    width: 80%;
+}
+
+.form-box h1 {
+    font-size: 36px;
+    margin-bottom: 10px;
+}
+
+.form-box p {
+    margin-bottom: 30px;
+    opacity: 0.8;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+input {
+    padding: 12px;
+    margin-bottom: 15px;
+    border-radius: 0px;
+    border: 2px solid #000000;
+    outline: none;
+}
+
+input:focus {
+    border-color: #000000;
+}
+
+button {
+    padding: 12px;
+    border: none;
+    border-radius: 0px;
+    background: #000000;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: #333333;
+}
+
+.login-link {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 14px;
+}
+
+.login-link a {
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.login-link a:hover {
+    text-decoration: underline;
+}
