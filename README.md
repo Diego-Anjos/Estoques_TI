@@ -1,187 +1,97 @@
-# Estoques TI
+# 📦 Estoques TI
 
-Sistema de gestão de estoque e ativos de TI — monorepo com API REST, banco Oracle e interface web.
+![Status](https://img.shields.io/badge/Status-Concluído-success?style=for-the-badge)
+![Versão](https://img.shields.io/badge/Versão-1.0-blue?style=for-the-badge)
 
-Controle de itens, locais, patrimônios, licenças de software, ocorrências e usuários, com auditoria de criação e alteração.
-
----
-
-## Tecnologias
-
-| Camada | Stack |
-|--------|--------|
-| **Backend** | Python, **FastAPI**, Uvicorn, Pydantic, Passlib (bcrypt) |
-| **Banco de dados** | **Oracle Database** (Oracle XE via Docker) |
-| **Frontend** | **Vite** + páginas estáticas (HTML / CSS / JavaScript) |
+Um sistema completo, seguro e robusto para gestão de inventário focado em **Equipamentos de TI**. Desenvolvido para facilitar o controle de ativos, rastrear movimentações (Entradas, Saídas e Devoluções por setor) e gerenciar ocorrências, garantindo a integridade dos dados e a segurança das operações[cite: 1].
 
 ---
 
-## Estrutura do monorepo
+## 💡 A Ideia do Projeto
 
-```text
-Estoques TI/
-├── Backend/          # API FastAPI + scripts Oracle
-│   ├── app/          # Código da aplicação
-│   ├── docker-compose.yml
-│   ├── init_db.py
-│   ├── requirements.txt
-│   └── .env.example
-├── FrontEnd/         # Interface Vite (páginas estáticas)
-│   ├── pages/
-│   ├── shared/
-│   ├── package.json
-│   └── .env.example
-└── README.md         # Este arquivo
+O **Estoques TI** nasceu da necessidade de modernizar e organizar o fluxo de equipamentos de tecnologia dentro de uma empresa[cite: 1]. Em vez de usar planilhas genéricas que podem gerar furos no estoque, o sistema garante[cite: 1]:
+- **Lock Transacional:** Previne saldo negativo caso duas pessoas tentem retirar o mesmo equipamento ao mesmo tempo[cite: 1].
+- **Rastreabilidade:** Saiba exatamente para qual setor (ex: RH, Financeiro) um equipamento foi enviado ou de onde foi devolvido[cite: 1].
+- **Segurança:** Autenticação via token JWT e proteção contra exclusão indevida de dados (Soft Delete e proteção de chaves estrangeiras)[cite: 1].
+
+---
+
+## 🚀 Tecnologias Utilizadas
+
+### Backend
+- **Python 3**[cite: 1]
+- **FastAPI** (Framework web super rápido)[cite: 1]
+- **SQLAlchemy** (ORM para comunicação com o banco)[cite: 1]
+- **Uvicorn** (Servidor ASGI)[cite: 1]
+- **JWT** (Autenticação e segurança)[cite: 1]
+
+### Frontend
+- **HTML5 / CSS3 / JavaScript Vanilla** (Sem frameworks pesados)[cite: 1]
+- **Vite** (Bundler para servidor de desenvolvimento ultrarrápido)[cite: 1]
+- **Design Responsivo & Tema Escuro/Claro**[cite: 1]
+
+### Banco de Dados & Infra
+- **Oracle Database**[cite: 1]
+- **Docker & Docker Compose**[cite: 1]
+
+---
+
+## ⚙️ Como Instalar e Rodar no seu PC
+
+### Pré-requisitos
+Certifique-se de ter instalado em sua máquina[cite: 1]:
+- [Git](https://git-scm.com/)[cite: 1]
+- [Docker Desktop](https://www.docker.com/products/docker-desktop)[cite: 1]
+- [Python 3.10+](https://www.python.org/)[cite: 1]
+- [Node.js & npm](https://nodejs.org/)[cite: 1]
+
+### Passo a Passo
+
+**1. Clone o repositório**
+```bash
+git clone [https://github.com/Diego-Anjos/Estoques_TI.git](https://github.com/Diego-Anjos/Estoques_TI.git)
+cd "Estoques TI"
 ```
 
----
-
-## Pré-requisitos
-
-- **Docker** e Docker Compose
-- **Python** 3.11+ (ou superior)
-- **Node.js** 18+ (com npm)
-- Git (opcional)
-
----
-
-## Como rodar o projeto localmente
-
-Siga as **3 etapas** abaixo, nesta ordem.
-
-### Passo 1: Banco de Dados
-
-Suba o Oracle XE com Docker e inicialize as tabelas.
-
-**1.1.** Entre na pasta do backend e inicie o container:
-
+**2. Suba o Banco de Dados Oracle (Docker)**
+Abra o seu terminal (Git Bash ou PowerShell) e rode[cite: 1]:
 ```bash
 cd Backend
 docker-compose up -d
 ```
+*Aguarde alguns instantes até o banco Oracle inicializar por completo.*[cite: 1]
 
-Aguarde o Oracle ficar pronto (na primeira vez pode levar alguns minutos). O serviço expõe a porta **1521**.
+**3. Rode a API (Backend)**
+> ⚠️ **Atenção (Usuários de Windows):** É muito importante configurar o encoding para UTF-8 no terminal para evitar travamentos durante a inicialização (devido a emojis e caracteres especiais)[cite: 1].
 
-**1.2.** Configure as variáveis de ambiente do backend (valores alinhados ao `docker-compose.yml`):
-
-```bash
-# Ainda em Backend/
-cp .env.example .env
-```
-
-Confira se o `.env` contém algo equivalente a:
-
-```env
-ORACLE_USER=estoque_user
-ORACLE_PASSWORD=estoque_senha
-ORACLE_DSN=localhost:1521/XEPDB1
-```
-
-**1.3.** Crie (ou atualize) as tabelas, sequences e triggers:
-
-```bash
-# Com o ambiente virtual do Passo 2 já ativo, ou após instalar as deps:
-python init_db.py
-```
-
-> **Dica:** se preferir, execute o `init_db.py` logo após instalar as dependências do Passo 2 (precisa do `oracledb` e do `.env`).
-
----
-
-### Passo 2: Backend
-
-**2.1.** Na pasta `Backend`, crie e ative o ambiente virtual:
-
-**Windows (PowerShell):**
-
+Abra um terminal **PowerShell**, certifique-se de estar dentro da pasta `Backend` e rode[cite: 1]:
 ```powershell
 cd Backend
-py -3.11 -m venv .venv
-.\.venv\Scripts\Activate.ps1
+$env:PYTHONIOENCODING="utf-8"
+$env:PYTHONUTF8="1"
+.\`.venv\Scripts\uvicorn` app.main:app --reload --host 127.0.0.1 --port 8000
 ```
+*A API estará disponível em `http://127.0.0.1:8000` (Documentação Swagger em `/docs`)[cite: 1].*
 
-**Linux / macOS:**
+*(Se usar Git Bash, substitua `$env:VAR="valor"` por `export VAR="valor"` e use barras normais `./.venv/...`)[cite: 1].*
 
+**4. Rode o Frontend**
+Abra um **novo terminal**, vá para a pasta Frontend e inicie o servidor com Vite[cite: 1]:
 ```bash
-cd Backend
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-**2.2.** Instale as dependências:
-
-```bash
-pip install -r requirements.txt
-```
-
-**2.3.** (Se ainda não rodou) inicialize o schema Oracle:
-
-```bash
-python init_db.py
-```
-
-**2.4.** Inicie a API com Uvicorn:
-
-```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-A API estará em:
-
-- **API:** http://localhost:8000  
-- **Swagger:** http://localhost:8000/docs  
-- **ReDoc:** http://localhost:8000/redoc  
-
----
-
-### Passo 3: Frontend
-
-Em **outro terminal**, configure e suba o Vite.
-
-**3.1.** Entre na pasta do frontend e instale as dependências:
-
-```bash
-cd FrontEnd
+cd Frontend
 npm install
-```
-
-**3.2.** Configure a URL da API:
-
-```bash
-cp .env.example .env
-```
-
-O padrão aponta para o backend local:
-
-```env
-VITE_API_URL=http://localhost:8000/api
-```
-
-**3.3.** Inicie o servidor de desenvolvimento:
-
-```bash
 npm run dev
 ```
-
-O frontend abre em **http://localhost:5173** (login em `/pages/auth/login/index.html`).
-
----
-
-## Resumo rápido
-
-| Etapa | Comando principal | URL / porta |
-|-------|-------------------|-------------|
-| **1. Banco** | `docker-compose up -d` + `python init_db.py` | `1521` |
-| **2. Backend** | `uvicorn app.main:app --reload --host 0.0.0.0 --port 8000` | http://localhost:8000 |
-| **3. Frontend** | `npm run dev` | http://localhost:5173 |
+*Acesse a interface em `http://localhost:5173`.*[cite: 1]
 
 ---
 
-## Documentação adicional
+## 👥 Desenvolvedores
 
-- Backend: pasta `Backend/` (API, Oracle, migrações)
-- Frontend: `FrontEnd/README.md` e `FrontEnd/docs/STRUCTURE.md`
+Projeto criado e desenvolvido com dedicação por[cite: 1]:
+
+* **Diego Anjos**[cite: 1]
+* **Maria Tavares**[cite: 1]
 
 ---
-
-**Versão:** 1.0.0 · Uso interno
+*Transformando o caos do estoque de TI em um processo simples e seguro.* 🚀💻[cite: 1]
