@@ -87,6 +87,8 @@ def _find_integrity_exc(exc: BaseException) -> Optional[BaseException]:
 
 
 async def oracle_database_error_handler(request: Request, exc: oracledb.DatabaseError):
+    # Sempre loga o erro real no terminal (o cliente recebe mensagem genérica)
+    print(f"Erro Oracle em {request.method} {request.url.path}: {exc}", flush=True)
     if _is_integrity_violation(exc):
         return JSONResponse(status_code=400, content={"detail": FK_DETAIL})
     # Outros erros de banco: 500 genérico (sem vazar SQL/ORA ao cliente)
@@ -111,6 +113,8 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 
     if _find_integrity_exc(exc):
         return JSONResponse(status_code=400, content={"detail": FK_DETAIL})
+
+    print(f"Erro não tratado em {request.method} {request.url.path}: {exc}", flush=True)
     return JSONResponse(
         status_code=500,
         content={"detail": "Erro interno do servidor."},

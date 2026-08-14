@@ -5,11 +5,19 @@
  */
 import { API_URL } from './config.js';
 import { getAccessToken, clearSession } from './auth.js';
+import { showNotification } from './notify.js';
+
+const OFFLINE_MESSAGE =
+  'Erro de conexão: O servidor da API não está respondendo. Verifique se o Backend está ativo na porta 8000.';
+
+/** Evita spam de toasts quando várias requisições falham juntas (API offline). */
+let lastOfflineNotifyAt = 0;
+const OFFLINE_NOTIFY_COOLDOWN_MS = 4000;
 
 /**
  * Monta headers com Content-Type (quando há JSON) e Bearer token.
  * @param {HeadersInit} [customHeaders]
- * @param {{ json?: boolean }} [opts]
+ * @param {{ json?: boolean, skipAuth?: boolean }} [opts]
  */
 function buildHeaders(customHeaders, opts = {}) {
   const headers = new Headers(customHeaders || {});
@@ -18,13 +26,58 @@ function buildHeaders(customHeaders, opts = {}) {
     headers.set('Content-Type', 'application/json');
   }
 
-  // Interceptor: injeta JWT em toda chamada autenticada
-  const token = getAccessToken();
-  if (token && !headers.has('Authorization')) {
-    headers.set('Authorization', `Bearer ${token}`);
+  // Rotas públicas (login/registro) não devem enviar JWT antigo/inválido
+  if (!opts.skipAuth) {
+    const token = getAccessToken();
+    if (token && !headers.has('Authorization')) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
   }
 
   return headers;
+}
+
+/**
+ * Detecta falha típica de servidor offline / conexão recusada
+ * (ERR_CONNECTION_REFUSED → "Failed to fetch" / NetworkError).
+ * @param {unknown} error
+ * @param {Response} [response]
+ */
+function isNetworkError(error, response) {
+  if (response && typeof response.status === 'number') return false;
+  if (response === undefined && error && typeof error === 'object' && 'status' in error) {
+    // Erros de API já tipados não são de rede
+    if (typeof error.status === 'number') return false;
+  }
+
+  const message = String(error?.message ?? error ?? '');
+  const name = String(error?.name ?? '');
+  return (
+    /failed to fetch|networkerror|network request failed|load failed|err_connection_refused/i.test(
+      message
+    ) ||
+    /networkerror/i.test(name) ||
+    (error instanceof TypeError && /fetch/i.test(message))
+  );
+}
+
+/**
+ * Notifica o usuário e lança erro amigável quando a API está offline.
+ * @param {unknown} cause
+ * @returns {never}
+ */
+function throwOfflineError(cause) {
+  const now = Date.now();
+  if (now - lastOfflineNotifyAt > OFFLINE_NOTIFY_COOLDOWN_MS) {
+    lastOfflineNotifyAt = now;
+    showNotification(OFFLINE_MESSAGE, 'error');
+  }
+
+  const error = new Error(OFFLINE_MESSAGE);
+  error.isNetworkError = true;
+  error.notified = true;
+  error.cause = cause;
+  throw error;
 }
 
 /** Resolve a URL da tela de login a partir de qualquer profundidade em /pages/. */
@@ -92,19 +145,36 @@ function extractDetail(payload, fallback) {
 
 /**
  * @param {string} path - Caminho relativo (ex: "/usuarios/login")
- * @param {RequestInit & { json?: unknown }} [options]
+ * @param {RequestInit & { json?: unknown, skipAuth?: boolean }} [options]
  * @returns {Promise<any>}
  */
 export async function apiRequest(path, options = {}) {
-  const { json, headers: customHeaders, ...rest } = options;
-  const headers = buildHeaders(customHeaders, { json: json !== undefined });
+  const { json, headers: customHeaders, skipAuth = false, ...rest } = options;
+  const headers = buildHeaders(customHeaders, {
+    json: json !== undefined,
+    skipAuth,
+  });
 
   const url = `${API_URL}/${String(path).replace(/^\//, '')}`;
-  const response = await fetch(url, {
-    ...rest,
-    headers,
-    body: json !== undefined ? JSON.stringify(json) : rest.body,
-  });
+  let response;
+
+  try {
+    response = await fetch(url, {
+      ...rest,
+      headers,
+      body: json !== undefined ? JSON.stringify(json) : rest.body,
+    });
+  } catch (error) {
+    if (isNetworkError(error, response)) {
+      throwOfflineError(error);
+    }
+    throw error;
+  }
+
+  // Sem status → trata como falha de rede (defesa extra)
+  if (response == null || typeof response.status !== 'number') {
+    throwOfflineError(response);
+  }
 
   const contentType = response.headers.get('content-type') || '';
   const payload = contentType.includes('application/json')
@@ -144,7 +214,20 @@ export async function apiDownload(path, fallbackFilename = 'download.csv') {
   const headers = buildHeaders();
 
   const url = `${API_URL}/${String(path).replace(/^\//, '')}`;
-  const response = await fetch(url, { method: 'GET', headers });
+  let response;
+
+  try {
+    response = await fetch(url, { method: 'GET', headers });
+  } catch (error) {
+    if (isNetworkError(error, response)) {
+      throwOfflineError(error);
+    }
+    throw error;
+  }
+
+  if (response == null || typeof response.status !== 'number') {
+    throwOfflineError(response);
+  }
 
   if (!response.ok) {
     let detail = response.statusText;

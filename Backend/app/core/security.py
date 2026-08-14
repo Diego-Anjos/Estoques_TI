@@ -18,8 +18,14 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verifica se uma senha corresponde ao hash."""
-    return pwd_context.verify(plain_password, hashed_password)
+    """Verifica se uma senha corresponde ao hash bcrypt salvo no banco."""
+    if not plain_password or not hashed_password:
+        return False
+    try:
+        return pwd_context.verify(plain_password, hashed_password)
+    except Exception:
+        # Hash inválido/corrompido no banco → trata como senha incorreta
+        return False
 
 
 def create_access_token(

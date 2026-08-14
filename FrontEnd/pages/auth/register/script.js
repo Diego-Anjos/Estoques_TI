@@ -22,6 +22,11 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    if (senha.length < 6) {
+      showNotification('A senha deve ter pelo menos 6 caracteres.', 'warning');
+      return;
+    }
+
     if (senha !== confirmar) {
       showNotification('As senhas não coincidem.', 'warning');
       return;
@@ -31,14 +36,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const labelOriginal = btn.textContent;
     btn.textContent = 'Cadastrando...';
 
+    let succeeded = false;
     try {
-      await api.post('/usuarios/', {
-        nome,
-        email,
-        senha,
-        ativo: 'S',
-      });
+      // Rota pública — não exige JWT (cadastro antes do primeiro login)
+      await api.post(
+        '/usuarios/registro',
+        {
+          nome,
+          email,
+          senha,
+          ativo: 'S',
+        },
+        { skipAuth: true }
+      );
 
+      succeeded = true;
       showNotification('Conta criada com sucesso! Redirecionando para o login...', 'success', {
         duration: 1800,
       });
@@ -46,9 +58,16 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = '../login/index.html';
       }, 1400);
     } catch (error) {
-      showNotification(error.message || 'Não foi possível criar a conta.', 'error');
-      btn.disabled = false;
-      btn.textContent = labelOriginal;
+      if (error?.notified || error?.isNetworkError) {
+        // api.js já notificou erro de rede
+      } else {
+        showNotification(error.message || 'Não foi possível criar a conta.', 'error');
+      }
+    } finally {
+      if (!succeeded) {
+        btn.disabled = false;
+        btn.textContent = labelOriginal;
+      }
     }
   });
 });

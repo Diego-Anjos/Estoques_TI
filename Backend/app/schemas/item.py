@@ -1,7 +1,7 @@
 """
 Schemas Pydantic para Item (cadastro de itens com local e quantidade)
 """
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional
 from datetime import datetime
 
@@ -32,6 +32,8 @@ class ItemUpdate(BaseModel):
 
 class ItemResponse(BaseModel):
     """Schema de resposta de item"""
+    model_config = ConfigDict(from_attributes=True)
+
     id_item: int
     nome: str
     id_tipo_item: Optional[int] = Field(None, description="ID do tipo/categoria (FK)")
@@ -46,6 +48,3 @@ class ItemResponse(BaseModel):
     criado_por: Optional[int] = None
     data_alteracao: Optional[datetime] = None
     alterado_por: Optional[int] = None
-
-    class Config:
-        from_attributes = True

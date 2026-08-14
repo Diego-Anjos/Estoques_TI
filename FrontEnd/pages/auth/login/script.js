@@ -23,17 +23,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const labelOriginal = btn.textContent;
     btn.textContent = 'Entrando...';
 
+    let succeeded = false;
     try {
-      const data = await api.post('/usuarios/login', { email, senha });
+      // JSON { email, senha } — alinhado com UsuarioLogin no FastAPI (não OAuth2 form)
+      const data = await api.post('/usuarios/login', { email, senha }, { skipAuth: true });
       saveSession(data);
+      succeeded = true;
       showNotification(`Bem-vindo(a), ${data.nome}!`, 'success', { duration: 1200 });
       setTimeout(() => {
         window.location.href = '../dashboard/paginainicial/index.html';
       }, 900);
     } catch (error) {
-      showNotification(error.message || 'Não foi possível fazer login.', 'error');
-      btn.disabled = false;
-      btn.textContent = labelOriginal;
+      if (error?.notified || error?.isNetworkError) {
+        // api.js já notificou erro de rede
+      } else if (error?.status === 401) {
+        showNotification('Email ou senha incorretos.', 'error');
+      } else {
+        showNotification(error.message || 'Não foi possível fazer login.', 'error');
+      }
+    } finally {
+      if (!succeeded) {
+        btn.disabled = false;
+        btn.textContent = labelOriginal;
+      }
     }
   });
 });

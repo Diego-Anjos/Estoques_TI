@@ -1,7 +1,7 @@
 """
 Schemas Pydantic para Movimentações de Estoque
 """
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing import Optional
 from datetime import datetime
 
@@ -73,7 +73,12 @@ class MovimentacaoCreate(BaseModel):
 
 
 class MovimentacaoResponse(BaseModel):
-    """Resposta de movimentação com nome do item"""
+    """
+    Resposta de movimentação com dados do item (nome/saldo via JOIN).
+    Aceita dict do repositório ou dataclass EstoqueMovimentacao (from_attributes).
+    """
+    model_config = ConfigDict(from_attributes=True)
+
     id_movimentacao: int
     id_item: int
     nome_item: Optional[str] = None
@@ -86,5 +91,10 @@ class MovimentacaoResponse(BaseModel):
     usuario_id: Optional[int] = None
     quantidade_atual: Optional[int] = None
 
-    class Config:
-        from_attributes = True
+    @field_validator('quantidade', 'quantidade_atual', 'id_movimentacao', 'id_item', mode='before')
+    @classmethod
+    def coercer_numeros(cls, value):
+        """Oracle NUMBER / Decimal → int (evita falha de serialização)."""
+        if value is None:
+            return value
+        return int(value)

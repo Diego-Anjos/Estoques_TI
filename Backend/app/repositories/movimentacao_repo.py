@@ -13,6 +13,7 @@ from app.core.database import get_cursor
 TABLE_MOV = "ESTOQUES_TI_MOVIMENTACOES"
 TABLE_ITENS = "ESTOQUES_TI_ITENS"
 TABLE_SALDO = "ESTOQUES_TI_ESTOQUE_SALDO"
+TABLE_LOCAIS = "ESTOQUES_TI_LOCAIS"
 
 # Tipos que aumentam o estoque (mesma matemática)
 TIPOS_ENTRADA = frozenset({'ENTRADA', 'DEVOLUCAO'})
@@ -93,6 +94,7 @@ class MovimentacaoRepository:
         Transação: valida saldo, atualiza item (+ saldo) e insere movimentação.
         - ENTRADA / DEVOLUCAO: soma quantidade
         - SAIDA: subtrai (400 se insuficiente)
+        - Bloqueia item/local inativos; exige setor em SAIDA/DEVOLUCAO
         Mantém SELECT … FOR UPDATE na linha do item.
         """
         id_item = dados['id_item']
@@ -105,10 +107,21 @@ class MovimentacaoRepository:
         setor_destino = dados.get('setor_destino') if tipo == 'SAIDA' else None
         setor_origem = dados.get('setor_origem') if tipo == 'DEVOLUCAO' else None
 
+        if tipo == 'SAIDA' and not setor_destino:
+            raise HTTPException(
+                status_code=400,
+                detail="Informe o setor de destino para a saída.",
+            )
+        if tipo == 'DEVOLUCAO' and not setor_origem:
+            raise HTTPException(
+                status_code=400,
+                detail="Informe o setor de origem para a devolução.",
+            )
+
         with get_cursor() as cursor:
             cursor.execute(
                 f"""
-                SELECT ID_ITEM, NOME, QUANTIDADE, ID_LOCAL
+                SELECT ID_ITEM, NOME, QUANTIDADE, ID_LOCAL, STATUS
                 FROM {TABLE_ITENS}
                 WHERE ID_ITEM = :id
                 FOR UPDATE
@@ -122,6 +135,33 @@ class MovimentacaoRepository:
             nome_item = item[1]
             qtd_atual = int(item[2] or 0)
             id_local = item[3]
+            status_item = (item[4] or '').strip()
+
+            if status_item != 'Ativo':
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Item '{nome_item}' está inativo e não pode ser movimentado.",
+                )
+
+            if id_local is not None:
+                cursor.execute(
+                    f"""
+                    SELECT STATUS FROM {TABLE_LOCAIS}
+                    WHERE ID_LOCAL = :id_local
+                    """,
+                    {'id_local': id_local},
+                )
+                local = cursor.fetchone()
+                if not local:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Local vinculado ao item '{nome_item}' não existe.",
+                    )
+                if (local[0] or '').strip() != 'Ativo':
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Local vinculado ao item '{nome_item}' está inativo.",
+                    )
 
             if tipo == 'SAIDA' and quantidade > qtd_atual:
                 raise HTTPException(

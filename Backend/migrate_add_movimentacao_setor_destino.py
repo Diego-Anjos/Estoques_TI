@@ -1,11 +1,18 @@
 """
-Migração: adiciona coluna SETOR_DESTINO em ESTOQUES_TI_MOVIMENTACOES
-(setor/departamento para o qual o item foi enviado em saídas).
+Migração: adiciona SETOR_DESTINO e SETOR_ORIGEM em ESTOQUES_TI_MOVIMENTACOES
+(necessários para saídas e devoluções na tela de Controle de Estoque).
 
 Uso (com venv ativo, a partir da pasta Backend):
     python migrate_add_movimentacao_setor_destino.py
 """
 from app.core.database import init_pool, close_pool, get_cursor
+
+
+TABELA = "ESTOQUES_TI_MOVIMENTACOES"
+COLUNAS = (
+    ("SETOR_DESTINO", "VARCHAR2(80)"),
+    ("SETOR_ORIGEM", "VARCHAR2(80)"),
+)
 
 
 def coluna_existe(cursor, table_name: str, column_name: str) -> bool:
@@ -26,16 +33,14 @@ def main() -> None:
     init_pool()
     try:
         with get_cursor() as cursor:
-            tabela = "ESTOQUES_TI_MOVIMENTACOES"
-
-            if not coluna_existe(cursor, tabela, "SETOR_DESTINO"):
-                print("Adicionando coluna SETOR_DESTINO VARCHAR2(80)...")
-                cursor.execute(
-                    f"ALTER TABLE {tabela} ADD (SETOR_DESTINO VARCHAR2(80))"
-                )
-                print("Migração concluída com sucesso: SETOR_DESTINO.")
-            else:
-                print("Coluna SETOR_DESTINO já existe. Nada a fazer.")
+            for nome, tipo in COLUNAS:
+                if not coluna_existe(cursor, TABELA, nome):
+                    print(f"Adicionando coluna {nome} {tipo}...")
+                    cursor.execute(f"ALTER TABLE {TABELA} ADD ({nome} {tipo})")
+                    print(f"  OK: {nome} criada.")
+                else:
+                    print(f"Coluna {nome} já existe. Nada a fazer.")
+            print("Migração de setores concluída.")
     finally:
         close_pool()
 

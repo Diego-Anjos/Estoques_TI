@@ -1,6 +1,8 @@
 """
 Router para endpoints de Movimentações de Estoque
 """
+import logging
+import traceback
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from typing import List, Optional
 from app.schemas.movimentacao import (
@@ -10,6 +12,8 @@ from app.schemas.movimentacao import (
 )
 from app.repositories.movimentacao_repo import MovimentacaoRepository
 from app.core.deps import get_current_active_user
+
+logger = logging.getLogger(__name__)
 
 
 router = APIRouter(
@@ -29,18 +33,17 @@ def criar_movimentacao(dados: MovimentacaoCreate):
     """
     try:
         novo_id = MovimentacaoRepository.registrar(dados.model_dump())
+        mov = MovimentacaoRepository.buscar_por_id(novo_id)
+        if not mov:
+            raise HTTPException(status_code=500, detail="Movimentação criada, mas não encontrada")
+        return MovimentacaoResponse.model_validate(mov)
     except HTTPException:
         raise
-    except Exception as exc:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Não foi possível registrar a movimentação: {exc}",
-        ) from exc
-
-    mov = MovimentacaoRepository.buscar_por_id(novo_id)
-    if not mov:
-        raise HTTPException(status_code=500, detail="Movimentação criada, mas não encontrada")
-    return MovimentacaoResponse(**mov)
+    except Exception as e:
+        traceback.print_exc()
+        logger.exception("Erro na rota POST /movimentacoes: %s", e)
+        print(f"Erro na rota POST /movimentacoes: {e}", flush=True)
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/", response_model=List[MovimentacaoResponse])
@@ -62,17 +65,33 @@ def listar_movimentacoes(
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
 
-    movimentacoes = MovimentacaoRepository.listar_todas(
-        tipo=tipo_normalizado,
-        nome_item=item,
-    )
-    return [MovimentacaoResponse(**m) for m in movimentacoes]
+    try:
+        movimentacoes = MovimentacaoRepository.listar_todas(
+            tipo=tipo_normalizado,
+            nome_item=item,
+        )
+        return [MovimentacaoResponse.model_validate(m) for m in movimentacoes]
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        logger.exception("Erro na rota GET /movimentacoes: %s", e)
+        print(f"Erro na rota GET /movimentacoes: {e}", flush=True)
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/{mov_id}", response_model=MovimentacaoResponse)
 def buscar_movimentacao(mov_id: int):
     """Busca movimentação por ID"""
-    mov = MovimentacaoRepository.buscar_por_id(mov_id)
-    if not mov:
-        raise HTTPException(status_code=404, detail="Movimentação não encontrada")
-    return MovimentacaoResponse(**mov)
+    try:
+        mov = MovimentacaoRepository.buscar_por_id(mov_id)
+        if not mov:
+            raise HTTPException(status_code=404, detail="Movimentação não encontrada")
+        return MovimentacaoResponse.model_validate(mov)
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        logger.exception("Erro na rota GET /movimentacoes/%s: %s", mov_id, e)
+        print(f"Erro na rota GET /movimentacoes/{mov_id}: {e}", flush=True)
+        raise HTTPException(status_code=500, detail=str(e)) from e

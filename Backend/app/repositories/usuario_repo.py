@@ -66,12 +66,12 @@ class UsuarioRepository:
     
     @staticmethod
     def buscar_por_email(email: str) -> Optional[Dict[str, Any]]:
-        """Busca usuário por email (para login)"""
+        """Busca usuário por email (para login). Comparação case-insensitive."""
         sql = f"""
             SELECT ID_USUARIO, NOME, EMAIL, SENHA_HASH, CARGO, ATIVO,
                    DATA_CRIACAO, CRIADO_POR, DATA_ALTERACAO, ALTERADO_POR
             FROM {TABLE_NAME}
-            WHERE EMAIL = :email
+            WHERE LOWER(EMAIL) = LOWER(:email)
         """
         
         with get_cursor() as cursor:

@@ -58,18 +58,26 @@ function atualizarCamposSetor() {
   if (grupoSetorDestino) {
     if (saida) {
       grupoSetorDestino.classList.remove('hidden');
+      if (setorDestinoInput) setorDestinoInput.required = true;
     } else {
       grupoSetorDestino.classList.add('hidden');
-      if (setorDestinoInput) setorDestinoInput.value = '';
+      if (setorDestinoInput) {
+        setorDestinoInput.required = false;
+        setorDestinoInput.value = '';
+      }
     }
   }
 
   if (grupoSetorOrigem) {
     if (devolucao) {
       grupoSetorOrigem.classList.remove('hidden');
+      if (setorOrigemInput) setorOrigemInput.required = true;
     } else {
       grupoSetorOrigem.classList.add('hidden');
-      if (setorOrigemInput) setorOrigemInput.value = '';
+      if (setorOrigemInput) {
+        setorOrigemInput.required = false;
+        setorOrigemInput.value = '';
+      }
     }
   }
 }
@@ -224,7 +232,9 @@ async function carregarMovimentacoes() {
   const query = filtrosAtuais().toString();
 
   try {
-    const data = await api.get(`/movimentacoes/${query ? `?${query}` : ''}`);
+    // GET /api/movimentacoes/ → lista [{ id_movimentacao, nome_item, tipo_movimentacao, ... }]
+    const path = query ? `/movimentacoes/?${query}` : '/movimentacoes/';
+    const data = await api.get(path);
     movimentacoesCache = Array.isArray(data) ? data : [];
     renderizarHistorico();
   } catch (error) {
@@ -269,6 +279,14 @@ async function salvarMovimentacao(event) {
     showNotification('Informe uma quantidade válida (>= 1).', 'warning');
     return;
   }
+  if (ehSaida(tipo) && !setorDestino) {
+    showNotification('Informe o setor de destino para a saída.', 'warning');
+    return;
+  }
+  if (ehDevolucao(tipo) && !setorOrigem) {
+    showNotification('Informe o setor de origem para a devolução.', 'warning');
+    return;
+  }
 
   const payload = {
     id_item: idItem,
@@ -279,6 +297,15 @@ async function salvarMovimentacao(event) {
     setor_origem: ehDevolucao(tipo) && setorOrigem ? setorOrigem : null,
     usuario_id: sessao?.id_usuario || null,
   };
+
+  const btnSalvar = document.getElementById('btn-salvar-movimento');
+  if (btnSalvar?.disabled) return;
+
+  const labelOriginal = btnSalvar?.textContent || 'Salvar';
+  if (btnSalvar) {
+    btnSalvar.disabled = true;
+    btnSalvar.textContent = 'Salvando...';
+  }
 
   try {
     const result = await api.post('/movimentacoes/', payload);
@@ -292,6 +319,11 @@ async function salvarMovimentacao(event) {
     await Promise.all([carregarMovimentacoes(), carregarOpcoesItens()]);
   } catch (error) {
     showNotification(error.message || 'Não foi possível registrar a movimentação.', 'error');
+  } finally {
+    if (btnSalvar) {
+      btnSalvar.disabled = false;
+      btnSalvar.textContent = labelOriginal;
+    }
   }
 }
 

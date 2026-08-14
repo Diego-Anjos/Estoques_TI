@@ -12,18 +12,31 @@ from app.core.status_filter import normalizar_status_filtro
 router = APIRouter(prefix="/usuarios", tags=["Usuários"])
 
 
+@router.post("/registro", response_model=UsuarioResponse, status_code=status.HTTP_201_CREATED)
+def registrar_usuario(dados: UsuarioCreate):
+    """
+    Cadastro público (tela de registro).
+    Não exige JWT — necessário para o primeiro usuário e auto-cadastro.
+    Body JSON: { nome, email, senha, ativo? }
+    """
+    return UsuarioService.criar_usuario(dados, usuario_id=None)
+
+
 @router.post("/", response_model=UsuarioResponse, status_code=status.HTTP_201_CREATED)
 def criar_usuario(
     dados: UsuarioCreate,
     current_user: dict[str, Any] = Depends(get_current_active_user),
 ):
-    """Cria um novo usuário"""
+    """Cria um novo usuário (admin autenticado — dashboard)."""
     return UsuarioService.criar_usuario(dados, usuario_id=current_user["id_usuario"])
 
 
 @router.post("/login", response_model=UsuarioLoginResponse)
 def login(dados: UsuarioLogin):
-    """Realiza login do usuário (público — emite JWT)"""
+    """
+    Login público com JSON (não OAuth2 form).
+    Body: { "email": "...", "senha": "..." } → JWT em access_token.
+    """
     return UsuarioService.login(dados)
 
 
