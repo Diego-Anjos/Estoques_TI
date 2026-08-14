@@ -1,13 +1,19 @@
 """
 Router para endpoints de Locais
 """
-from fastapi import APIRouter, HTTPException, status
-from typing import List
+from fastapi import APIRouter, Depends, HTTPException, status, Query
+from typing import List, Optional
 from app.schemas.local import LocalCreate, LocalUpdate, LocalResponse
 from app.repositories.local_repo import LocalRepository
+from app.core.deps import get_current_active_user
+from app.core.status_filter import normalizar_status_filtro
 
 
-router = APIRouter(prefix="/locais", tags=["Locais"])
+router = APIRouter(
+    prefix="/locais",
+    tags=["Locais"],
+    dependencies=[Depends(get_current_active_user)],
+)
 
 
 @router.post("/", response_model=LocalResponse, status_code=status.HTTP_201_CREATED)
@@ -24,9 +30,19 @@ def criar_local(dados: LocalCreate):
 
 
 @router.get("/", response_model=List[LocalResponse])
-def listar_locais():
-    """Lista todos os locais"""
-    locais = LocalRepository.listar_todos()
+def listar_locais(
+    status_filtro: Optional[str] = Query(
+        None,
+        alias="status",
+        description="Filtro de status: ativos (padrão), inativos ou todos",
+    ),
+):
+    """
+    Lista locais.
+    Padrão: apenas Ativos — usado pela tabela principal e pelos dropdowns
+    (Cadastro de Itens / Movimentações).
+    """
+    locais = LocalRepository.listar_todos(status_filtro=normalizar_status_filtro(status_filtro))
     return [LocalResponse(**l) for l in locais]
 
 
@@ -64,9 +80,21 @@ def atualizar_local(local_id: int, dados: LocalUpdate):
 
 
 @router.delete("/{local_id}", status_code=status.HTTP_200_OK)
-def deletar_local(local_id: int):
-    """Deleta um local"""
-    sucesso = LocalRepository.deletar(local_id)
+def inativar_local(local_id: int):
+    """
+    Inativa um local (soft-delete).
+    Locais com dependências (itens, movimentações) não podem ser apagados;
+    a regra de negócio é apenas marcar STATUS = 'Inativo'.
+    """
+    existente = LocalRepository.buscar_por_id(local_id)
+    if not existente:
+        raise HTTPException(status_code=404, detail="Local não encontrado")
+
+    if (existente.get("status") or "").lower() == "inativo":
+        return {"mensagem": "Local já está inativo"}
+
+    sucesso = LocalRepository.inativar(local_id)
     if not sucesso:
         raise HTTPException(status_code=404, detail="Local não encontrado")
-    return {"mensagem": "Local deletado com sucesso"}
+
+    return {"mensagem": "Local inativado com sucesso"}

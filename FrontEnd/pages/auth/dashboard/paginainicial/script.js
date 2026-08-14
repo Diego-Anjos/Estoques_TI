@@ -574,10 +574,10 @@ class EstoqueManager {
 
     getCategoriaText(categoria) {
         const categoriaMap = {
-            'eletronicos': 'Eletrônicos',
-            'roupas': 'Roupas',
-            'casa': 'Casa e Jardim',
-            'livros': 'Livros'
+            'hardware': 'Hardware',
+            'perifericos': 'Periféricos',
+            'redes': 'Redes',
+            'consumivel': 'Consumíveis (Toner/Tinta)'
         };
         return categoriaMap[categoria] || categoria;
     }
@@ -636,34 +636,34 @@ class EstoqueManager {
         const produtosExemplo = [
             {
                 id: 1,
-                nome: 'Smartphone Samsung Galaxy',
-                categoria: 'eletronicos',
+                nome: 'Notebook Dell Latitude 5540',
+                categoria: 'hardware',
                 quantidade: 15,
-                preco: 899.99,
+                preco: 4299.90,
                 status: 'em-estoque'
             },
             {
                 id: 2,
-                nome: 'Camiseta Polo',
-                categoria: 'roupas',
+                nome: 'Teclado Mecânico USB',
+                categoria: 'perifericos',
                 quantidade: 3,
-                preco: 79.90,
+                preco: 249.90,
                 status: 'estoque-baixo'
             },
             {
                 id: 3,
-                nome: 'Aspirador de Pó',
-                categoria: 'casa',
+                nome: 'Switch Gigabit 24 portas',
+                categoria: 'redes',
                 quantidade: 0,
-                preco: 299.99,
+                preco: 1899.00,
                 status: 'sem-estoque'
             },
             {
                 id: 4,
-                nome: 'Livro: JavaScript Moderno',
-                categoria: 'livros',
+                nome: 'Toner HP 85A',
+                categoria: 'consumivel',
                 quantidade: 25,
-                preco: 59.90,
+                preco: 189.90,
                 status: 'em-estoque'
             }
         ];
@@ -752,6 +752,14 @@ class EstoqueManager {
         }
         if (btnFiltroAvancado) {
             btnFiltroAvancado.addEventListener('click', () => this.toggleFiltroAvancadoUsuarios());
+        }
+
+        const statusFiltro = document.getElementById('status-usuario-filtro');
+        if (statusFiltro) {
+            statusFiltro.addEventListener('change', () => {
+                this.paginaUsuarios = 1;
+                this.carregarUsuarios();
+            });
         }
 
         // Enter nos filtros dispara busca
@@ -973,6 +981,10 @@ class EstoqueManager {
 
         try {
             await api.delete(`/usuarios/${id}`);
+            // Remove imediatamente do estado local e recarrega da API (só ativos)
+            this.usuarios = this.usuarios.filter((u) => u.id_usuario !== id);
+            this.usuariosFiltrados = this.usuariosFiltrados.filter((u) => u.id_usuario !== id);
+            this.renderUsuarios();
             showNotification('Usuário inativado com sucesso!', 'success');
             await this.carregarUsuarios();
             this.loadDashboardStats();
@@ -983,6 +995,7 @@ class EstoqueManager {
 
     /**
      * Busca usuários na API (GET /api/usuarios) e atualiza o estado da tabela.
+     * Por padrão a API retorna apenas ativos (ATIVO='S').
      */
     async carregarUsuarios() {
         const tbody = document.getElementById('usuarios-tbody');
@@ -998,13 +1011,14 @@ class EstoqueManager {
 
         const nome = document.getElementById('nome-input')?.value.trim() || '';
         const email = document.getElementById('email-input')?.value.trim() || '';
+        const statusFiltro = document.getElementById('status-usuario-filtro')?.value || 'ativos';
 
         const params = new URLSearchParams();
+        params.set('status', statusFiltro);
         if (nome) params.set('nome', nome);
         if (email) params.set('email', email);
 
-        const query = params.toString();
-        const path = query ? `/usuarios/?${query}` : '/usuarios/';
+        const path = `/usuarios/?${params.toString()}`;
 
         try {
             const data = await api.get(path);
@@ -1154,9 +1168,11 @@ class EstoqueManager {
     limparFiltrosUsuarios() {
         const nomeInput = document.getElementById('nome-input');
         const emailInput = document.getElementById('email-input');
+        const statusFiltro = document.getElementById('status-usuario-filtro');
 
         if (nomeInput) nomeInput.value = '';
         if (emailInput) emailInput.value = '';
+        if (statusFiltro) statusFiltro.value = 'ativos';
 
         this.paginaUsuarios = 1;
         this.carregarUsuarios();
@@ -1164,7 +1180,20 @@ class EstoqueManager {
     }
 
     toggleFiltroAvancadoUsuarios() {
-        showNotification('Filtro avançado de usuários em desenvolvimento', 'info');
+        const btn = document.getElementById('btn-filtro-avancado');
+        const panel = document.getElementById('filtro-avancado-usuarios-panel');
+        if (!panel) return;
+
+        const aberto = panel.hasAttribute('hidden');
+        if (aberto) {
+            panel.removeAttribute('hidden');
+            btn?.classList.add('open');
+            btn?.setAttribute('aria-expanded', 'true');
+        } else {
+            panel.setAttribute('hidden', '');
+            btn?.classList.remove('open');
+            btn?.setAttribute('aria-expanded', 'false');
+        }
     }
 
     toggleFiltroAvancadoLocais() {
@@ -1962,9 +1991,9 @@ class EstoqueManager {
         const tiposExemplo = [
             {
                 id: 1,
-                nome: 'Material de Construção',
-                categoria: 'material',
-                descricao: 'Materiais diversos para construção civil',
+                nome: 'Hardware',
+                categoria: 'hardware',
+                descricao: 'Notebooks, desktops, monitores e servidores',
                 status: 'Ativo',
                 dataCriacao: '15/01/2026, 08:00:00',
                 criadoPor: 'Sistema',
@@ -1973,9 +2002,9 @@ class EstoqueManager {
             },
             {
                 id: 2,
-                nome: 'Equipamento de Informática',
-                categoria: 'equipamento',
-                descricao: 'Equipamentos relacionados a informática',
+                nome: 'Periféricos',
+                categoria: 'periferico',
+                descricao: 'Teclados, mouses, webcams e headsets',
                 status: 'Ativo',
                 dataCriacao: '18/01/2026, 10:30:00',
                 criadoPor: 'Administrador',
@@ -1984,9 +2013,9 @@ class EstoqueManager {
             },
             {
                 id: 3,
-                nome: 'Material de Escritório',
+                nome: 'Consumíveis (Toner/Tinta)',
                 categoria: 'consumivel',
-                descricao: 'Materiais consumíveis de escritório',
+                descricao: 'Toners, cartuchos de tinta e bobinas térmicas',
                 status: 'Ativo',
                 dataCriacao: '22/01/2026, 16:45:00',
                 criadoPor: 'Pedro Costa',
@@ -1995,9 +2024,9 @@ class EstoqueManager {
             },
             {
                 id: 4,
-                nome: 'Ferramentas Manuais',
-                categoria: 'ferramenta',
-                descricao: 'Ferramentas para uso manual',
+                nome: 'Equipamentos de Rede',
+                categoria: 'redes',
+                descricao: 'Switches, roteadores, access points e cabos de rede',
                 status: 'Ativo',
                 dataCriacao: '25/01/2026, 11:15:00',
                 criadoPor: 'Sistema',
@@ -2006,9 +2035,9 @@ class EstoqueManager {
             },
             {
                 id: 5,
-                nome: 'Componente Eletrônico',
-                categoria: 'componente',
-                descricao: 'Componentes para equipamentos eletrônicos',
+                nome: 'Software/Licenças',
+                categoria: 'software',
+                descricao: 'Licenças e suites de software corporativo',
                 status: 'Inativo',
                 dataCriacao: '28/01/2026, 13:20:00',
                 criadoPor: 'Técnico',

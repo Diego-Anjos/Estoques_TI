@@ -1,12 +1,17 @@
 """
 Router de estatísticas do Dashboard
 """
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
 from app.core.database import get_cursor
+from app.core.deps import get_current_active_user
 
-router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
+router = APIRouter(
+    prefix="/dashboard",
+    tags=["Dashboard"],
+    dependencies=[Depends(get_current_active_user)],
+)
 
 
 class DashboardStatsResponse(BaseModel):
@@ -23,13 +28,13 @@ def obter_estatisticas():
     """
     try:
         with get_cursor() as cursor:
-            cursor.execute("SELECT COUNT(*) FROM ESTOQUES_TI_USUARIOS")
-            total_usuarios = int(cursor.fetchone()[0])
-
+            # Total alinhado à listagem (só ativos — soft delete não conta)
             cursor.execute(
                 "SELECT COUNT(*) FROM ESTOQUES_TI_USUARIOS WHERE ATIVO = 'S'"
             )
-            usuarios_ativos = int(cursor.fetchone()[0])
+            total_ativos = int(cursor.fetchone()[0])
+            total_usuarios = total_ativos
+            usuarios_ativos = total_ativos
 
             cursor.execute("SELECT COUNT(*) FROM ESTOQUES_TI_ITENS")
             itens_cadastrados = int(cursor.fetchone()[0])

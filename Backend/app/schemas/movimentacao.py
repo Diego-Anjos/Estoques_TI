@@ -6,29 +6,70 @@ from typing import Optional
 from datetime import datetime
 
 
+def normalizar_tipo_movimentacao(value: str) -> str:
+    """
+    Converte qualquer variação vinda da UI ('Entrada', 'saída', 'D', 'Devolução')
+    no valor gravado na coluna TIPO_MOVIMENTACAO:
+    'ENTRADA' | 'SAIDA' | 'DEVOLUCAO'
+    """
+    raw = (value or '').strip().upper()
+    raw = (
+        raw.replace('Í', 'I')
+        .replace('Á', 'A')
+        .replace('É', 'E')
+        .replace('Ó', 'O')
+        .replace('Ú', 'U')
+        .replace('Ç', 'C')
+    )
+    if raw in ('ENTRADA', 'E'):
+        return 'ENTRADA'
+    if raw in ('SAIDA', 'S'):
+        return 'SAIDA'
+    if raw in ('DEVOLUCAO', 'D'):
+        return 'DEVOLUCAO'
+    if raw.startswith('ENTR'):
+        return 'ENTRADA'
+    if raw.startswith('SAID'):
+        return 'SAIDA'
+    if raw.startswith('DEVOL'):
+        return 'DEVOLUCAO'
+    raise ValueError("tipo_movimentacao deve ser 'Entrada', 'Saída' ou 'Devolução'")
+
+
+def _limpar_setor(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    limpo = value.strip()
+    return limpo or None
+
+
 class MovimentacaoCreate(BaseModel):
-    """Request para registrar entrada/saída"""
+    """Request para registrar entrada/saída/devolução"""
     id_item: int = Field(..., description="ID do item")
-    tipo_movimentacao: str = Field(..., description="Entrada ou Saída")
+    tipo_movimentacao: str = Field(..., description="Entrada, Saída ou Devolução")
     quantidade: int = Field(..., gt=0, description="Quantidade movimentada")
     observacao: Optional[str] = Field(None, max_length=300, description="Observação/motivo")
+    setor_destino: Optional[str] = Field(
+        None,
+        max_length=80,
+        description="Setor/departamento de destino (saídas)",
+    )
+    setor_origem: Optional[str] = Field(
+        None,
+        max_length=80,
+        description="Setor de onde o item está retornando (devoluções)",
+    )
     usuario_id: Optional[int] = Field(None, description="ID do usuário (opcional)")
 
     @field_validator('tipo_movimentacao')
     @classmethod
     def normalizar_tipo(cls, value: str) -> str:
-        raw = (value or '').strip().upper()
-        raw = raw.replace('Í', 'I').replace('Á', 'A')
-        if raw in ('ENTRADA', 'E'):
-            return 'ENTRADA'
-        if raw in ('SAIDA', 'SAÍDA', 'S'):
-            return 'SAIDA'
-        # Aceita labels do front ("entrada" / "saida")
-        if raw.startswith('ENTR'):
-            return 'ENTRADA'
-        if raw.startswith('SAID'):
-            return 'SAIDA'
-        raise ValueError("tipo_movimentacao deve ser 'Entrada' ou 'Saída'")
+        return normalizar_tipo_movimentacao(value)
+
+    @field_validator('setor_destino', 'setor_origem')
+    @classmethod
+    def limpar_setores(cls, value: Optional[str]) -> Optional[str]:
+        return _limpar_setor(value)
 
 
 class MovimentacaoResponse(BaseModel):
@@ -39,6 +80,8 @@ class MovimentacaoResponse(BaseModel):
     tipo_movimentacao: str
     quantidade: int
     observacao: Optional[str] = None
+    setor_destino: Optional[str] = None
+    setor_origem: Optional[str] = None
     data_movimentacao: datetime
     usuario_id: Optional[int] = None
     quantidade_atual: Optional[int] = None

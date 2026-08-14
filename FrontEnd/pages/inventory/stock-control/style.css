@@ -248,6 +248,16 @@ body {
     font-size: 0.82rem;
 }
 
+/* Seta clara (o campo tem fundo escuro) e espaço à direita para o texto
+   nunca passar por baixo dela */
+.filter-select-new {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23cfd5e3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+    background-size: 0.9em;
+    padding-right: 2rem;
+}
+
 .filter-actions {
     display: flex;
     gap: 0.45rem;
@@ -319,6 +329,11 @@ body {
 .tipo-badge.saida {
     background: #fee2e2;
     color: #991b1b;
+}
+
+.tipo-badge.devolucao {
+    background: #dbeafe;
+    color: #1e40af;
 }
 
 .itens-table-container {
@@ -447,6 +462,15 @@ body {
     border-radius: 5px;
     background: #434c63;
     color: #ecf0fb;
+}
+
+/* Precisa vir depois do shorthand `background` acima, senão a seta é apagada */
+.form-group select {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23cfd5e3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.7rem center;
+    background-size: 1em;
+    padding-right: 2.2rem;
 }
 
 .form-actions {

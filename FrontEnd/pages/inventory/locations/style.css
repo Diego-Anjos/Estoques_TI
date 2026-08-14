@@ -412,6 +412,33 @@ body {
     color: var(--text-primary);
 }
 
+.btn-advanced-filter svg {
+    transition: transform 0.2s ease;
+}
+
+.btn-advanced-filter.open svg {
+    transform: rotate(180deg);
+}
+
+.advanced-filter-panel {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color);
+    text-align: left;
+}
+
+.advanced-filter-panel[hidden] {
+    display: none;
+}
+
+.advanced-filter-panel .filter-group {
+    min-width: 200px;
+}
+
 /* CONTENT AREA & TABLE */
 .content-area {
     background: white;

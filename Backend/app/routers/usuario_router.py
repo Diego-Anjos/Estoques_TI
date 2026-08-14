@@ -1,24 +1,29 @@
 """
 Router para endpoints de Usuários
 """
-from fastapi import APIRouter, status, Query
-from typing import List, Optional
+from fastapi import APIRouter, Depends, status, Query
+from typing import Any, List, Optional
 from app.schemas.usuario import UsuarioCreate, UsuarioUpdate, UsuarioResponse, UsuarioLogin, UsuarioLoginResponse
 from app.services.usuario_service import UsuarioService
+from app.core.deps import get_current_active_user
+from app.core.status_filter import normalizar_status_filtro
 
 
 router = APIRouter(prefix="/usuarios", tags=["Usuários"])
 
 
 @router.post("/", response_model=UsuarioResponse, status_code=status.HTTP_201_CREATED)
-def criar_usuario(dados: UsuarioCreate):
+def criar_usuario(
+    dados: UsuarioCreate,
+    current_user: dict[str, Any] = Depends(get_current_active_user),
+):
     """Cria um novo usuário"""
-    return UsuarioService.criar_usuario(dados)
+    return UsuarioService.criar_usuario(dados, usuario_id=current_user["id_usuario"])
 
 
 @router.post("/login", response_model=UsuarioLoginResponse)
 def login(dados: UsuarioLogin):
-    """Realiza login do usuário"""
+    """Realiza login do usuário (público — emite JWT)"""
     return UsuarioService.login(dados)
 
 
@@ -28,34 +33,48 @@ def listar_usuarios(
     email: Optional[str] = Query(None, description="Filtro parcial por email"),
     skip: int = Query(0, ge=0, description="Registros a pular (paginação)"),
     limit: Optional[int] = Query(None, ge=1, le=500, description="Máximo de registros"),
-    apenas_ativos: Optional[bool] = Query(
+    status_filtro: Optional[str] = Query(
         None,
-        description="True = só ativos, False = só inativos, omitir = todos",
+        alias="status",
+        description="Filtro de status: ativos (padrão), inativos ou todos",
     ),
+    _current_user: dict[str, Any] = Depends(get_current_active_user),
 ):
-    """Lista usuários (Oracle) com filtros e paginação opcionais."""
+    """Lista usuários. Por padrão retorna apenas ATIVO='S'."""
     return UsuarioService.listar_usuarios(
         nome=nome,
         email=email,
         skip=skip,
         limit=limit,
-        apenas_ativos=apenas_ativos,
+        status_filtro=normalizar_status_filtro(status_filtro),
     )
 
 
 @router.get("/{usuario_id}", response_model=UsuarioResponse)
-def buscar_usuario(usuario_id: int):
+def buscar_usuario(
+    usuario_id: int,
+    _current_user: dict[str, Any] = Depends(get_current_active_user),
+):
     """Busca usuário por ID"""
     return UsuarioService.buscar_usuario(usuario_id)
 
 
 @router.put("/{usuario_id}", response_model=UsuarioResponse)
-def atualizar_usuario(usuario_id: int, dados: UsuarioUpdate):
+def atualizar_usuario(
+    usuario_id: int,
+    dados: UsuarioUpdate,
+    current_user: dict[str, Any] = Depends(get_current_active_user),
+):
     """Atualiza parcialmente um usuário (nome, email, cargo e/ou senha)."""
-    return UsuarioService.atualizar_usuario(usuario_id, dados)
+    return UsuarioService.atualizar_usuario(
+        usuario_id, dados, alterado_por=current_user["id_usuario"]
+    )
 
 
 @router.delete("/{usuario_id}", status_code=status.HTTP_200_OK)
-def deletar_usuario(usuario_id: int):
+def deletar_usuario(
+    usuario_id: int,
+    _current_user: dict[str, Any] = Depends(get_current_active_user),
+):
     """Inativa um usuário (soft delete)."""
     return UsuarioService.deletar_usuario(usuario_id)

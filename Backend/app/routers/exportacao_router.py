@@ -4,12 +4,17 @@ Router para exportação de dados em CSV
 import csv
 import io
 from datetime import datetime
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from app.core.database import get_cursor
+from app.core.deps import get_current_active_user
 
 
-router = APIRouter(prefix="/exportar", tags=["Exportação"])
+router = APIRouter(
+    prefix="/exportar",
+    tags=["Exportação"],
+    dependencies=[Depends(get_current_active_user)],
+)
 
 
 def _csv_response(filename: str, headers: list[str], rows: list[list]) -> StreamingResponse:
@@ -75,7 +80,7 @@ def exportar_movimentacoes():
             cursor.execute(
                 """
                 SELECT m.ID_MOVIMENTACAO, m.DATA_CRIACAO, i.NOME, m.TIPO_MOVIMENTACAO,
-                       m.QUANTIDADE, m.MOTIVO
+                       m.QUANTIDADE, m.SETOR_DESTINO, m.MOTIVO
                 FROM ESTOQUES_TI_MOVIMENTACOES m
                 JOIN ESTOQUES_TI_ITENS i ON i.ID_ITEM = m.ID_ITEM
                 ORDER BY m.DATA_CRIACAO DESC, m.ID_MOVIMENTACAO DESC
@@ -92,6 +97,7 @@ def exportar_movimentacoes():
                     r[3] or '',
                     int(r[4] or 0),
                     r[5] or '',
+                    r[6] or '',
                 ])
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Erro ao exportar movimentações: {exc}") from exc
@@ -99,6 +105,6 @@ def exportar_movimentacoes():
     stamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     return _csv_response(
         f"movimentacoes_{stamp}.csv",
-        ["ID", "Data", "Item", "Tipo", "Quantidade", "Observacao"],
+        ["ID", "Data", "Item", "Tipo", "Quantidade", "Setor Destino", "Observacao"],
         rows,
     )

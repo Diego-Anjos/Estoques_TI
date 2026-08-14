@@ -99,16 +99,23 @@ class UsuarioRepository:
         email: Optional[str] = None,
         skip: int = 0,
         limit: Optional[int] = None,
+        status_filtro: str = "ativos",
         apenas_ativos: Optional[bool] = None,
     ) -> List[Dict[str, Any]]:
         """Lista usuários com filtros opcionais e paginação (skip/limit)."""
         where = []
         params: Dict[str, Any] = {}
 
+        # Compatibilidade: apenas_ativos sobrescreve se status_filtro não for explícito via service
         if apenas_ativos is True:
             where.append("ATIVO = 'S'")
         elif apenas_ativos is False:
             where.append("ATIVO = 'N'")
+        elif status_filtro == "ativos":
+            where.append("ATIVO = 'S'")
+        elif status_filtro == "inativos":
+            where.append("ATIVO = 'N'")
+        # status_filtro == "todos" → sem filtro de ATIVO
 
         if nome:
             where.append("UPPER(NOME) LIKE UPPER(:nome)")
@@ -159,6 +166,7 @@ class UsuarioRepository:
     def contar(
         nome: Optional[str] = None,
         email: Optional[str] = None,
+        status_filtro: str = "ativos",
         apenas_ativos: Optional[bool] = None,
     ) -> int:
         """Conta usuários com os mesmos filtros de listar."""
@@ -168,6 +176,10 @@ class UsuarioRepository:
         if apenas_ativos is True:
             where.append("ATIVO = 'S'")
         elif apenas_ativos is False:
+            where.append("ATIVO = 'N'")
+        elif status_filtro == "ativos":
+            where.append("ATIVO = 'S'")
+        elif status_filtro == "inativos":
             where.append("ATIVO = 'N'")
 
         if nome:
@@ -188,7 +200,9 @@ class UsuarioRepository:
     @staticmethod
     def listar_todos(apenas_ativos: bool = True) -> List[Dict[str, Any]]:
         """Lista todos os usuários (compatibilidade)."""
-        return UsuarioRepository.listar(apenas_ativos=True if apenas_ativos else None)
+        return UsuarioRepository.listar(
+            status_filtro="ativos" if apenas_ativos else "todos"
+        )
     
     @staticmethod
     def atualizar(usuario_id: int, dados: Dict[str, Any], alterado_por: Optional[int] = None) -> bool:
@@ -226,6 +240,40 @@ class UsuarioRepository:
         
         with get_cursor() as cursor:
             cursor.execute(sql, params)
+            return cursor.rowcount > 0
+
+    @staticmethod
+    def reativar(
+        usuario_id: int,
+        dados: Dict[str, Any],
+        alterado_por: Optional[int] = None,
+    ) -> bool:
+        """
+        Reativa um usuário soft-deleted (ATIVO='N'):
+        atualiza nome, cargo, senha e volta ATIVO='S', preservando o ID.
+        """
+        sql = f"""
+            UPDATE {TABLE_NAME}
+            SET NOME = :nome,
+                CARGO = :cargo,
+                SENHA_HASH = :senha_hash,
+                ATIVO = 'S',
+                DATA_ALTERACAO = SYSTIMESTAMP,
+                ALTERADO_POR = :alterado_por
+            WHERE ID_USUARIO = :id
+              AND ATIVO = 'N'
+        """
+        with get_cursor() as cursor:
+            cursor.execute(
+                sql,
+                {
+                    "id": usuario_id,
+                    "nome": dados["nome"],
+                    "cargo": dados.get("cargo") or None,
+                    "senha_hash": hash_password(dados["senha"]),
+                    "alterado_por": alterado_por,
+                },
+            )
             return cursor.rowcount > 0
     
     @staticmethod

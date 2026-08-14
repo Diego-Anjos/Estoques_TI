@@ -391,11 +391,11 @@ class CadastroItensManager {
 
     getTipoNome(tipoId) {
         const tipoMap = {
-            '1': 'Material de Construção',
-            '2': 'Equipamento de Informática',
-            '3': 'Material de Escritório',
-            '4': 'Ferramentas Manuais',
-            '5': 'Componente Eletrônico'
+            '1': 'Hardware',
+            '2': 'Periféricos',
+            '3': 'Consumíveis (Toner/Tinta)',
+            '4': 'Equipamentos de Rede',
+            '5': 'Software/Licenças'
         };
         return tipoMap[tipoId] || 'Desconhecido';
     }
@@ -546,10 +546,10 @@ class CadastroItensManager {
         const itensExemplo = [
             {
                 id: 1,
-                nome: 'Martelo de Unha 500g',
+                nome: 'Switch Gigabit 24 portas',
                 tipoId: 4,
-                tipoNome: 'Ferramentas Manuais',
-                descricao: 'Martelo de unha profissional com cabo de madeira',
+                tipoNome: 'Equipamentos de Rede',
+                descricao: 'Switch gerenciável Gigabit Ethernet 24 portas',
                 quantidade: 15,
                 unidade: 'UN',
                 localId: 1,
@@ -564,7 +564,7 @@ class CadastroItensManager {
                 id: 2,
                 nome: 'Mouse Óptico USB',
                 tipoId: 2,
-                tipoNome: 'Equipamento de Informática',
+                tipoNome: 'Periféricos',
                 descricao: 'Mouse óptico com conexão USB 2.0',
                 quantidade: 25,
                 unidade: 'UN',
@@ -578,12 +578,12 @@ class CadastroItensManager {
             },
             {
                 id: 3,
-                nome: 'Papel A4 Branco',
+                nome: 'Toner HP 85A',
                 tipoId: 3,
-                tipoNome: 'Material de Escritório',
-                descricao: 'Resma de papel A4 75g com 500 folhas',
+                tipoNome: 'Consumíveis (Toner/Tinta)',
+                descricao: 'Cartucho de toner HP LaserJet 85A preto',
                 quantidade: 50,
-                unidade: 'PCT',
+                unidade: 'UN',
                 localId: 1,
                 localNome: 'Depósito Central',
                 status: 'Ativo',
@@ -594,12 +594,12 @@ class CadastroItensManager {
             },
             {
                 id: 4,
-                nome: 'Cimento Portland CP II',
+                nome: 'Notebook Dell Latitude 5540',
                 tipoId: 1,
-                tipoNome: 'Material de Construção',
-                descricao: 'Saco de cimento Portland CP II - 50kg',
-                quantidade: 100,
-                unidade: 'PC',
+                tipoNome: 'Hardware',
+                descricao: 'Notebook corporativo 15.6" Intel Core i5 16GB RAM',
+                quantidade: 12,
+                unidade: 'UN',
                 localId: 3,
                 localNome: 'Galpão Sul',
                 status: 'Ativo',
@@ -610,10 +610,10 @@ class CadastroItensManager {
             },
             {
                 id: 5,
-                nome: 'Resistor 1KΩ',
+                nome: 'Licença Microsoft 365',
                 tipoId: 5,
-                tipoNome: 'Componente Eletrônico',
-                descricao: 'Resistor de carbono 1KΩ 1/4W 5%',
+                tipoNome: 'Software/Licenças',
+                descricao: 'Licença anual Microsoft 365 Business Standard',
                 quantidade: 0,
                 unidade: 'UN',
                 localId: 2,

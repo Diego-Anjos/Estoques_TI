@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="../../../shared/css/responsive.css">
     <link rel="stylesheet" href="../../../shared/css/notify.css">
     <link rel="stylesheet" href="../../../shared/css/confirmModal.css">
+    <link rel="stylesheet" href="../../../shared/css/form-controls.css">
 </head>
 <body>
     <header class="header">
@@ -82,6 +83,7 @@
                         <option value="">Todos</option>
                         <option value="ENTRADA">Entrada</option>
                         <option value="SAIDA">Saída</option>
+                        <option value="DEVOLUCAO">Devolução</option>
                     </select>
                 </div>
                 <div class="filter-actions">
@@ -116,6 +118,7 @@
                             <th>Item</th>
                             <th>Tipo</th>
                             <th>Quantidade</th>
+                            <th>Setor</th>
                             <th>Observação</th>
                         </tr>
                     </thead>
@@ -146,8 +149,41 @@
                         <option value="">Selecione</option>
                         <option value="Entrada">Entrada</option>
                         <option value="Saída">Saída</option>
+                        <option value="Devolução">Devolução</option>
                     </select>
                 </div>
+                <div class="form-group hidden" id="grupo-setor-destino">
+                    <label for="setor-destino">Setor de Destino:</label>
+                    <input
+                        type="text"
+                        id="setor-destino"
+                        name="setor-destino"
+                        list="setores-sugestoes"
+                        maxlength="80"
+                        placeholder="Ex: RH, Financeiro, Recepção"
+                        autocomplete="off"
+                    >
+                </div>
+                <div class="form-group hidden" id="grupo-setor-origem">
+                    <label for="setor-origem">Setor de Origem:</label>
+                    <input
+                        type="text"
+                        id="setor-origem"
+                        name="setor-origem"
+                        list="setores-sugestoes"
+                        maxlength="80"
+                        placeholder="Ex: RH, Financeiro, Recepção"
+                        autocomplete="off"
+                    >
+                </div>
+                <datalist id="setores-sugestoes">
+                    <option value="RH"></option>
+                    <option value="Financeiro"></option>
+                    <option value="Recepção"></option>
+                    <option value="Comercial"></option>
+                    <option value="Operações"></option>
+                    <option value="Diretoria"></option>
+                </datalist>
                 <div class="form-group">
                     <label for="quantidade">Quantidade:</label>
                     <input type="number" id="quantidade" name="quantidade" min="1" required>

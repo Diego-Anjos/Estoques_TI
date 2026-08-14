@@ -13,6 +13,7 @@ if (!isAuthenticated()) {
 
 const sessao = getSession();
 let itensCache = [];
+let tiposCache = [];
 let itemEditandoId = null;
 
 const tbody = document.getElementById('itens-tbody');
@@ -29,7 +30,7 @@ const localSelect = document.getElementById('local-item');
 const statusSelect = document.getElementById('status-item');
 const filtroNome = document.getElementById('nome-item-input');
 const filtroTipo = document.getElementById('tipo-item-select');
-const filtroStatus = document.getElementById('status-item-select');
+const filtroStatus = document.getElementById('status-item-filtro');
 const greeting = document.getElementById('user-greeting');
 
 function escapeHtml(value) {
@@ -48,15 +49,30 @@ function statusClass(status) {
 
 function itensFiltrados() {
   const nome = (filtroNome?.value || '').trim().toLowerCase();
-  const tipo = (filtroTipo?.value || '').trim().toLowerCase();
-  const status = (filtroStatus?.value || '').trim().toLowerCase();
+  const idTipo = (filtroTipo?.value || '').trim();
 
   return itensCache.filter((item) => {
     const okNome = !nome || String(item.nome || '').toLowerCase().includes(nome);
-    const okTipo = !tipo || String(item.tipo || '').toLowerCase() === tipo;
-    const okStatus = !status || String(item.status || '').toLowerCase() === status;
-    return okNome && okTipo && okStatus;
+    const okTipo = !idTipo || String(item.id_tipo_item ?? '') === idTipo;
+    return okNome && okTipo;
   });
+}
+
+function toggleFiltroAvancado() {
+  const btn = document.getElementById('btn-filtro-avancado-itens');
+  const panel = document.getElementById('filtro-avancado-itens-panel');
+  if (!panel) return;
+
+  const abrir = panel.hasAttribute('hidden');
+  if (abrir) {
+    panel.removeAttribute('hidden');
+    btn?.classList.add('open');
+    btn?.setAttribute('aria-expanded', 'true');
+  } else {
+    panel.setAttribute('hidden', '');
+    btn?.classList.remove('open');
+    btn?.setAttribute('aria-expanded', 'false');
+  }
 }
 
 function renderizarTabela(lista = itensFiltrados()) {
@@ -96,7 +112,7 @@ function renderizarTabela(lista = itensFiltrados()) {
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </button>
-              <button type="button" class="btn-delete" data-action="delete" data-id="${item.id_item}" title="Excluir">
+              <button type="button" class="btn-delete" data-action="delete" data-id="${item.id_item}" title="Inativar">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <polyline points="3,6 5,6 21,6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                   <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -108,6 +124,49 @@ function renderizarTabela(lista = itensFiltrados()) {
       `;
     })
     .join('');
+}
+
+function preencherSelectTipos(selectEl, { incluirVazio = true, textoVazio = 'Selecione um tipo' } = {}) {
+  if (!selectEl) return;
+
+  const valorAtual = selectEl.value;
+  selectEl.innerHTML = '';
+
+  if (incluirVazio) {
+    const empty = document.createElement('option');
+    empty.value = '';
+    empty.textContent = textoVazio;
+    selectEl.appendChild(empty);
+  }
+
+  tiposCache.forEach((tipo) => {
+    const option = document.createElement('option');
+    option.value = String(tipo.id_tipo_item);
+    option.textContent = tipo.nome;
+    selectEl.appendChild(option);
+  });
+
+  if (valorAtual && [...selectEl.options].some((opt) => opt.value === valorAtual)) {
+    selectEl.value = valorAtual;
+  }
+}
+
+async function carregarOpcoesTipos() {
+  try {
+    const tipos = await api.get('/tipos-item/?status=ativos');
+    tiposCache = Array.isArray(tipos) ? tipos : [];
+    preencherSelectTipos(tipoSelect, { textoVazio: 'Selecione um tipo' });
+    preencherSelectTipos(filtroTipo, { textoVazio: 'Todos os tipos' });
+
+    if (!tiposCache.length) {
+      showNotification('Cadastre um tipo de item (categoria) antes de adicionar produtos.', 'warning');
+    }
+  } catch (error) {
+    showNotification(error.message || 'Não foi possível carregar os tipos de item.', 'error');
+    tiposCache = [];
+    preencherSelectTipos(tipoSelect, { textoVazio: 'Selecione um tipo' });
+    preencherSelectTipos(filtroTipo, { textoVazio: 'Todos os tipos' });
+  }
 }
 
 async function carregarOpcoesLocais() {
@@ -136,7 +195,8 @@ async function carregarOpcoesLocais() {
 
 async function carregarItens() {
   try {
-    const data = await api.get('/itens/');
+    const status = filtroStatus?.value || 'ativos';
+    const data = await api.get(`/itens/?status=${encodeURIComponent(status)}`);
     itensCache = Array.isArray(data) ? data : [];
     renderizarTabela();
   } catch (error) {
@@ -155,11 +215,40 @@ function abrirModal(item = null) {
   }
 
   if (nomeInput) nomeInput.value = item?.nome || '';
-  if (tipoSelect) tipoSelect.value = item?.tipo || '';
+  if (tipoSelect) {
+    const idTipo = item?.id_tipo_item != null ? String(item.id_tipo_item) : '';
+    tipoSelect.value = idTipo;
+    // Garante que o tipo atual apareça mesmo se estiver inativo
+    if (idTipo && ![...tipoSelect.options].some((opt) => opt.value === idTipo)) {
+      const option = document.createElement('option');
+      option.value = idTipo;
+      option.textContent = `${item.tipo || 'Tipo atual'} (inativo)`;
+      tipoSelect.appendChild(option);
+      tipoSelect.value = idTipo;
+    }
+  }
   if (descricaoInput) descricaoInput.value = item?.descricao || '';
-  if (quantidadeInput) quantidadeInput.value = item?.quantidade ?? 0;
+  if (quantidadeInput) {
+    quantidadeInput.value = item?.quantidade ?? 0;
+    // Quantidade é read-only na edição — alterações só via movimentações
+    quantidadeInput.disabled = Boolean(item);
+    quantidadeInput.title = item
+      ? 'Altere o saldo em Controle de Estoque (movimentações)'
+      : '';
+  }
   if (unidadeSelect) unidadeSelect.value = item?.unidade || '';
   if (localSelect) localSelect.value = item?.id_local != null ? String(item.id_local) : '';
+  // Garante que o local atual apareça no select mesmo se estiver inativo
+  if (item?.id_local != null && localSelect) {
+    const valor = String(item.id_local);
+    if (![...localSelect.options].some((opt) => opt.value === valor)) {
+      const option = document.createElement('option');
+      option.value = valor;
+      option.textContent = `${item.nome_local || 'Local atual'} (inativo)`;
+      localSelect.appendChild(option);
+      localSelect.value = valor;
+    }
+  }
   if (statusSelect) statusSelect.value = item?.status || 'Ativo';
 
   modal?.classList.add('active');
@@ -171,7 +260,11 @@ function fecharModal() {
   itemEditandoId = null;
   form?.reset();
   if (itemIdInput) itemIdInput.value = '';
-  if (quantidadeInput) quantidadeInput.value = '0';
+  if (quantidadeInput) {
+    quantidadeInput.value = '0';
+    quantidadeInput.disabled = false;
+    quantidadeInput.title = '';
+  }
   if (statusSelect) statusSelect.value = 'Ativo';
 }
 
@@ -179,7 +272,7 @@ async function salvarItem(event) {
   event.preventDefault();
 
   const nome = (nomeInput?.value || '').trim();
-  const tipo = (tipoSelect?.value || '').trim();
+  const idTipoItem = Number(tipoSelect?.value || 0);
   const descricao = (descricaoInput?.value || '').trim();
   const quantidade = Number(quantidadeInput?.value ?? 0);
   const unidade = (unidadeSelect?.value || '').trim();
@@ -190,7 +283,7 @@ async function salvarItem(event) {
     showNotification('Informe um nome com pelo menos 2 caracteres.', 'warning');
     return;
   }
-  if (!tipo) {
+  if (!idTipoItem) {
     showNotification('Selecione um tipo.', 'warning');
     return;
   }
@@ -209,9 +302,8 @@ async function salvarItem(event) {
 
   const payload = {
     nome,
-    tipo,
+    id_tipo_item: idTipoItem,
     descricao: descricao || null,
-    quantidade,
     unidade,
     id_local: idLocal,
     status,
@@ -219,10 +311,11 @@ async function salvarItem(event) {
 
   try {
     if (itemEditandoId) {
+      // PUT não aceita quantidade (read-only) — saldo só via /movimentacoes/
       await api.put(`/itens/${itemEditandoId}`, payload);
       showNotification('Item atualizado com sucesso!', 'success');
     } else {
-      await api.post('/itens/', payload);
+      await api.post('/itens/', { ...payload, quantidade });
       showNotification('Item cadastrado com sucesso!', 'success');
     }
     fecharModal();
@@ -237,18 +330,18 @@ function confirmarExclusao(id) {
   const nome = item?.nome ? `"${item.nome}"` : 'este item';
 
   showConfirmModal(
-    'Excluir item',
-    `Tem certeza que deseja excluir ${nome}? Esta ação não poderá ser desfeita.`,
+    'Inativar item',
+    `Tem certeza que deseja inativar ${nome}? Ele deixará de aparecer na listagem padrão, mas poderá ser reativado depois.`,
     async () => {
       try {
         await api.delete(`/itens/${id}`);
-        showNotification('Item excluído com sucesso!', 'success');
+        showNotification('Item inativado com sucesso!', 'success');
         await carregarItens();
       } catch (error) {
-        showNotification(error.message || 'Não foi possível excluir o item.', 'error');
+        showNotification(error.message || 'Não foi possível inativar o item.', 'error');
       }
     },
-    { confirmText: 'Sim, excluir', cancelText: 'Cancelar', danger: true }
+    { confirmText: 'Sim, inativar', cancelText: 'Cancelar', danger: true }
   );
 }
 
@@ -294,7 +387,7 @@ function setupEventListeners() {
 
   document.getElementById('btn-adicionar-item')?.addEventListener('click', async (e) => {
     e.preventDefault();
-    await carregarOpcoesLocais();
+    await Promise.all([carregarOpcoesTipos(), carregarOpcoesLocais()]);
     abrirModal();
   });
 
@@ -321,8 +414,17 @@ function setupEventListeners() {
     e.preventDefault();
     if (filtroNome) filtroNome.value = '';
     if (filtroTipo) filtroTipo.value = '';
-    if (filtroStatus) filtroStatus.value = '';
-    renderizarTabela();
+    if (filtroStatus) filtroStatus.value = 'ativos';
+    carregarItens();
+  });
+
+  document.getElementById('btn-filtro-avancado-itens')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    toggleFiltroAvancado();
+  });
+
+  filtroStatus?.addEventListener('change', () => {
+    carregarItens();
   });
 
   tbody?.addEventListener('click', async (e) => {
@@ -335,7 +437,7 @@ function setupEventListeners() {
     if (btn.dataset.action === 'edit') {
       const item = itensCache.find((row) => Number(row.id_item) === id);
       if (!item) return;
-      await carregarOpcoesLocais();
+      await Promise.all([carregarOpcoesTipos(), carregarOpcoesLocais()]);
       abrirModal(item);
       return;
     }
@@ -379,7 +481,8 @@ function setupEventListeners() {
 
 setupEventListeners();
 initTheme();
+carregarOpcoesTipos();
 carregarOpcoesLocais();
 carregarItens();
 
-export { carregarItens, carregarOpcoesLocais };
+export { carregarItens, carregarOpcoesLocais, carregarOpcoesTipos };

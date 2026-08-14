@@ -1,13 +1,18 @@
 """
 Router para endpoints de Patrimônio
 """
-from fastapi import APIRouter, status, Query
+from fastapi import APIRouter, Depends, status, Query
 from typing import List, Optional
 from app.schemas.patrimonio import PatrimonioCreate, PatrimonioUpdate, PatrimonioResponse
 from app.services.patrimonio_service import PatrimonioService
+from app.core.deps import get_current_active_user
 
 
-router = APIRouter(prefix="/patrimonio", tags=["Patrimônio"])
+router = APIRouter(
+    prefix="/patrimonio",
+    tags=["Patrimônio"],
+    dependencies=[Depends(get_current_active_user)],
+)
 
 
 @router.post("/", response_model=PatrimonioResponse, status_code=status.HTTP_201_CREATED)

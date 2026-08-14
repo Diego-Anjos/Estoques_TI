@@ -1,13 +1,18 @@
 """
 Router para endpoints de Ocorrências
 """
-from fastapi import APIRouter, status, Query
+from fastapi import APIRouter, Depends, status, Query
 from typing import List, Optional
 from app.schemas.ocorrencia import OcorrenciaCreate, OcorrenciaUpdate, OcorrenciaResponse, FecharOcorrenciaRequest, AlterarStatusRequest
 from app.services.ocorrencia_service import OcorrenciaService
+from app.core.deps import get_current_active_user
 
 
-router = APIRouter(prefix="/ocorrencias", tags=["Ocorrências"])
+router = APIRouter(
+    prefix="/ocorrencias",
+    tags=["Ocorrências"],
+    dependencies=[Depends(get_current_active_user)],
+)
 
 
 @router.post("/", response_model=OcorrenciaResponse, status_code=status.HTTP_201_CREATED)
@@ -19,7 +24,7 @@ def criar_ocorrencia(dados: OcorrenciaCreate):
 @router.get("/", response_model=List[OcorrenciaResponse])
 def listar_ocorrencias(
     status_filtro: Optional[str] = Query(None, alias="status", description="Filtrar por status"),
-    tipo: Optional[str] = Query(None, description="Filtrar por tipo")
+    tipo: Optional[str] = Query(None, description="Filtrar por tipo (legado; ignorado no DDL atual)"),
 ):
     """Lista todas as ocorrências, opcionalmente filtradas por status e/ou tipo"""
     return OcorrenciaService.listar_ocorrencias(status_filtro, tipo)
@@ -27,7 +32,7 @@ def listar_ocorrencias(
 
 @router.get("/abertas", response_model=List[OcorrenciaResponse])
 def listar_ocorrencias_abertas():
-    """Lista apenas ocorrências abertas (status diferente de FECHADO)"""
+    """Lista apenas ocorrências abertas (ABERTA / EM_ANDAMENTO)"""
     return OcorrenciaService.listar_ocorrencias_abertas()
 
 

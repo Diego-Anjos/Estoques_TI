@@ -534,7 +534,7 @@ body {
     border: 2px solid var(--border-color);
     border-radius: 6px;
     font-size: 0.875rem;
-    background: white;
+    background-color: white;
     color: var(--text-secondary);
     cursor: pointer;
     transition: all 0.3s ease;
@@ -546,6 +546,10 @@ body {
     background-position: right 0.75rem center;
     background-size: 1em;
     padding-right: 2.5rem;
+}
+
+.filter-select-new::-ms-expand {
+    display: none;
 }
 
 .filter-select-new:focus {
@@ -638,6 +642,33 @@ body {
 .btn-advanced-filter:hover {
     background: var(--secondary-color);
     color: var(--text-primary);
+}
+
+.btn-advanced-filter svg {
+    transition: transform 0.2s ease;
+}
+
+.btn-advanced-filter.open svg {
+    transform: rotate(180deg);
+}
+
+.advanced-filter-panel {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color);
+    text-align: left;
+}
+
+.advanced-filter-panel[hidden] {
+    display: none;
+}
+
+.advanced-filter-panel .filter-group {
+    min-width: 200px;
 }
 
 /* CONTENT AREA */
@@ -981,7 +1012,7 @@ body {
     border-radius: 8px;
     font-size: 1rem;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    background: var(--secondary-color);
+    background-color: var(--secondary-color);
 }
 
 .form-group input:focus,
@@ -990,17 +1021,24 @@ body {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
-    background: white;
+    background-color: white;
 }
 
 .form-group select {
+    background-color: var(--secondary-color);
     background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
     background-repeat: no-repeat;
     background-position: right 1rem center;
     background-size: 1.2em;
     padding-right: 3rem;
     appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
     cursor: pointer;
+}
+
+.form-group select::-ms-expand {
+    display: none;
 }
 
 .form-group textarea {
@@ -1302,9 +1340,16 @@ body {
 [data-theme="dark"] .filter-select-new,
 [data-theme="dark"] .page-input,
 [data-theme="dark"] .items-select {
-    background: #4b5563;
+    background-color: #4b5563;
     border-color: #6b7280;
     color: var(--text-primary);
+}
+
+[data-theme="dark"] .filter-select-new {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e5e7eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1em;
 }
 
 [data-theme="dark"] .filter-input-new::placeholder {
@@ -1355,15 +1400,22 @@ body {
 [data-theme="dark"] .form-group input,
 [data-theme="dark"] .form-group select,
 [data-theme="dark"] .form-group textarea {
-    background: #4b5563;
+    background-color: #4b5563;
     border-color: #6b7280;
     color: var(--text-primary);
+}
+
+[data-theme="dark"] .form-group select {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e5e7eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1.2em;
 }
 
 [data-theme="dark"] .form-group input:focus,
 [data-theme="dark"] .form-group select:focus,
 [data-theme="dark"] .form-group textarea:focus {
-    background: #374151;
+    background-color: #374151;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(199, 166, 255, 0.2);
 }

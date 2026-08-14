@@ -1,5 +1,9 @@
 """
 Repository transacional para Movimentações de Estoque
+
+Tipos:
+- ENTRADA / DEVOLUCAO → somam ao saldo (com FOR UPDATE)
+- SAIDA → subtrai do saldo (com validação de saldo insuficiente)
 """
 from typing import List, Optional, Dict, Any
 from fastapi import HTTPException
@@ -10,6 +14,9 @@ TABLE_MOV = "ESTOQUES_TI_MOVIMENTACOES"
 TABLE_ITENS = "ESTOQUES_TI_ITENS"
 TABLE_SALDO = "ESTOQUES_TI_ESTOQUE_SALDO"
 
+# Tipos que aumentam o estoque (mesma matemática)
+TIPOS_ENTRADA = frozenset({'ENTRADA', 'DEVOLUCAO'})
+
 
 def _row_to_dict(row) -> Dict[str, Any]:
     return {
@@ -18,10 +25,12 @@ def _row_to_dict(row) -> Dict[str, Any]:
         'tipo_movimentacao': row[2],
         'quantidade': int(row[3]),
         'observacao': row[4],
-        'data_movimentacao': row[5],
-        'usuario_id': row[6],
-        'nome_item': row[7],
-        'quantidade_atual': int(row[8] or 0),
+        'setor_destino': row[5],
+        'setor_origem': row[6],
+        'data_movimentacao': row[7],
+        'usuario_id': row[8],
+        'nome_item': row[9],
+        'quantidade_atual': int(row[10] or 0),
     }
 
 
@@ -29,24 +38,45 @@ class MovimentacaoRepository:
     """Operações de movimentação com atualização atômica do saldo do item"""
 
     @staticmethod
-    def listar_todas() -> List[Dict[str, Any]]:
+    def listar_todas(
+        tipo: Optional[str] = None,
+        nome_item: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Lista o histórico, opcionalmente filtrado por tipo
+        ('ENTRADA'/'SAIDA'/'DEVOLUCAO') e por parte do nome do item.
+        """
+        filtros: List[str] = []
+        params: Dict[str, Any] = {}
+
+        if tipo:
+            filtros.append("m.TIPO_MOVIMENTACAO = :tipo")
+            params['tipo'] = tipo
+
+        if nome_item and nome_item.strip():
+            filtros.append("UPPER(i.NOME) LIKE UPPER(:nome_item)")
+            params['nome_item'] = f"%{nome_item.strip()}%"
+
+        where = f"WHERE {' AND '.join(filtros)}" if filtros else ""
+
         sql = f"""
             SELECT m.ID_MOVIMENTACAO, m.ID_ITEM, m.TIPO_MOVIMENTACAO, m.QUANTIDADE,
-                   m.MOTIVO, m.DATA_CRIACAO, m.CRIADO_POR,
+                   m.MOTIVO, m.SETOR_DESTINO, m.SETOR_ORIGEM, m.DATA_CRIACAO, m.CRIADO_POR,
                    i.NOME, i.QUANTIDADE
             FROM {TABLE_MOV} m
             JOIN {TABLE_ITENS} i ON i.ID_ITEM = m.ID_ITEM
+            {where}
             ORDER BY m.DATA_CRIACAO DESC, m.ID_MOVIMENTACAO DESC
         """
         with get_cursor() as cursor:
-            cursor.execute(sql)
+            cursor.execute(sql, params)
             return [_row_to_dict(row) for row in cursor.fetchall()]
 
     @staticmethod
     def buscar_por_id(mov_id: int) -> Optional[Dict[str, Any]]:
         sql = f"""
             SELECT m.ID_MOVIMENTACAO, m.ID_ITEM, m.TIPO_MOVIMENTACAO, m.QUANTIDADE,
-                   m.MOTIVO, m.DATA_CRIACAO, m.CRIADO_POR,
+                   m.MOTIVO, m.SETOR_DESTINO, m.SETOR_ORIGEM, m.DATA_CRIACAO, m.CRIADO_POR,
                    i.NOME, i.QUANTIDADE
             FROM {TABLE_MOV} m
             JOIN {TABLE_ITENS} i ON i.ID_ITEM = m.ID_ITEM
@@ -61,13 +91,19 @@ class MovimentacaoRepository:
     def registrar(dados: Dict[str, Any]) -> int:
         """
         Transação: valida saldo, atualiza item (+ saldo) e insere movimentação.
-        Lança HTTPException 400 se saída insuficiente ou item inexistente.
+        - ENTRADA / DEVOLUCAO: soma quantidade
+        - SAIDA: subtrai (400 se insuficiente)
+        Mantém SELECT … FOR UPDATE na linha do item.
         """
         id_item = dados['id_item']
-        tipo = dados['tipo_movimentacao']  # ENTRADA | SAIDA
+        tipo = dados['tipo_movimentacao']  # ENTRADA | SAIDA | DEVOLUCAO
         quantidade = int(dados['quantidade'])
         observacao = dados.get('observacao')
         usuario_id = dados.get('usuario_id')
+
+        # Setores só no tipo correspondente
+        setor_destino = dados.get('setor_destino') if tipo == 'SAIDA' else None
+        setor_origem = dados.get('setor_origem') if tipo == 'DEVOLUCAO' else None
 
         with get_cursor() as cursor:
             cursor.execute(
@@ -96,14 +132,20 @@ class MovimentacaoRepository:
                     ),
                 )
 
-            if tipo == 'ENTRADA':
+            if tipo in TIPOS_ENTRADA:
+                # ENTRADA e DEVOLUCAO: mesma matemática (somam ao estoque)
                 nova_qtd = qtd_atual + quantidade
                 id_local_origem = None
                 id_local_destino = id_local
-            else:
+            elif tipo == 'SAIDA':
                 nova_qtd = qtd_atual - quantidade
                 id_local_origem = id_local
                 id_local_destino = None
+            else:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Tipo de movimentação não suportado: {tipo}",
+                )
 
             cursor.execute(
                 f"""
@@ -166,10 +208,10 @@ class MovimentacaoRepository:
                 f"""
                 INSERT INTO {TABLE_MOV}
                     (ID_ITEM, ID_LOCAL_ORIGEM, ID_LOCAL_DESTINO, QUANTIDADE,
-                     TIPO_MOVIMENTACAO, MOTIVO, CRIADO_POR)
+                     TIPO_MOVIMENTACAO, MOTIVO, SETOR_DESTINO, SETOR_ORIGEM, CRIADO_POR)
                 VALUES
                     (:id_item, :id_local_origem, :id_local_destino, :quantidade,
-                     :tipo, :motivo, :criado_por)
+                     :tipo, :motivo, :setor_destino, :setor_origem, :criado_por)
                 RETURNING ID_MOVIMENTACAO INTO :id
                 """,
                 {
@@ -179,6 +221,8 @@ class MovimentacaoRepository:
                     'quantidade': quantidade,
                     'tipo': tipo,
                     'motivo': observacao,
+                    'setor_destino': setor_destino,
+                    'setor_origem': setor_origem,
                     'criado_por': usuario_id,
                     'id': id_var,
                 },

@@ -26,6 +26,7 @@ const statusSelect = document.getElementById('status-local');
 const localIdInput = document.getElementById('local-id');
 const filtroNome = document.getElementById('nome-input');
 const filtroSetor = document.getElementById('setor-input');
+const filtroStatus = document.getElementById('status-local-filtro');
 const greeting = document.getElementById('user-greeting');
 
 function escapeHtml(value) {
@@ -53,6 +54,23 @@ function locaisFiltrados() {
     const okSetor = !setor || String(local.setor || '').toLowerCase().includes(setor);
     return okNome && okSetor;
   });
+}
+
+function toggleFiltroAvancado() {
+  const btn = document.getElementById('btn-filtro-avancado-locais');
+  const panel = document.getElementById('filtro-avancado-locais-panel');
+  if (!panel) return;
+
+  const abrir = panel.hasAttribute('hidden');
+  if (abrir) {
+    panel.removeAttribute('hidden');
+    btn?.classList.add('open');
+    btn?.setAttribute('aria-expanded', 'true');
+  } else {
+    panel.setAttribute('hidden', '');
+    btn?.classList.remove('open');
+    btn?.setAttribute('aria-expanded', 'false');
+  }
 }
 
 function renderizarTabela(lista = locaisFiltrados()) {
@@ -89,7 +107,7 @@ function renderizarTabela(lista = locaisFiltrados()) {
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </button>
-              <button type="button" class="btn-delete" data-action="delete" data-id="${local.id_local}" title="Excluir">
+              <button type="button" class="btn-delete" data-action="delete" data-id="${local.id_local}" title="Inativar">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <polyline points="3,6 5,6 21,6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                   <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -105,7 +123,8 @@ function renderizarTabela(lista = locaisFiltrados()) {
 
 async function carregarLocais() {
   try {
-    const data = await api.get('/locais/');
+    const status = filtroStatus?.value || 'ativos';
+    const data = await api.get(`/locais/?status=${encodeURIComponent(status)}`);
     locaisCache = Array.isArray(data) ? data : [];
     renderizarTabela();
   } catch (error) {
@@ -175,23 +194,25 @@ async function salvarLocal(event) {
   }
 }
 
-function confirmarExclusao(id) {
+function confirmarInativacao(id) {
   const local = locaisCache.find((item) => Number(item.id_local) === Number(id));
   const nome = local?.nome ? `"${local.nome}"` : 'este local';
 
   showConfirmModal(
-    'Excluir local',
-    `Tem certeza que deseja excluir ${nome}? Esta ação não poderá ser desfeita.`,
+    'Inativar local',
+    `Tem certeza que deseja inativar ${nome}? Ele deixará de aparecer na listagem e nos cadastros, mas o histórico será preservado.`,
     async () => {
       try {
+        // Soft-delete: backend marca STATUS = 'Inativo' (sem DELETE físico)
         await api.delete(`/locais/${id}`);
-        showNotification('Local excluído com sucesso!', 'success');
+        showNotification('Local inativado com sucesso!', 'success');
+        // Recarrega a tabela — GET /locais retorna só Ativos, então some da tela
         await carregarLocais();
       } catch (error) {
-        showNotification(error.message || 'Não foi possível excluir o local.', 'error');
+        showNotification(error.message || 'Não foi possível inativar o local.', 'error');
       }
     },
-    { confirmText: 'Sim, excluir', cancelText: 'Cancelar', danger: true }
+    { confirmText: 'Sim, inativar', cancelText: 'Cancelar', danger: true }
   );
 }
 
@@ -263,7 +284,17 @@ function setupEventListeners() {
     e.preventDefault();
     if (filtroNome) filtroNome.value = '';
     if (filtroSetor) filtroSetor.value = '';
-    renderizarTabela();
+    if (filtroStatus) filtroStatus.value = 'ativos';
+    carregarLocais();
+  });
+
+  document.getElementById('btn-filtro-avancado-locais')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    toggleFiltroAvancado();
+  });
+
+  filtroStatus?.addEventListener('change', () => {
+    carregarLocais();
   });
 
   filtroNome?.addEventListener('keydown', (e) => {
@@ -294,7 +325,7 @@ function setupEventListeners() {
     }
 
     if (btn.dataset.action === 'delete') {
-      confirmarExclusao(id);
+      confirmarInativacao(id);
     }
   });
 

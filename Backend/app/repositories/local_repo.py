@@ -80,11 +80,32 @@ class LocalRepository:
             return _row_to_dict(row) if row else None
 
     @staticmethod
-    def listar_todos() -> List[Dict[str, Any]]:
-        """Lista todos os locais"""
+    def listar_todos(
+        status_filtro: str = "ativos",
+        apenas_ativos: Optional[bool] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Lista locais.
+        Por padrão retorna apenas STATUS = 'Ativo' (tabela principal e dropdowns).
+        status_filtro: ativos | inativos | todos
+        """
+        # Compatibilidade com chamadas antigas (apenas_ativos)
+        if apenas_ativos is True:
+            status_filtro = "ativos"
+        elif apenas_ativos is False:
+            status_filtro = "todos"
+
+        if status_filtro == "ativos":
+            where_sql = "WHERE STATUS = 'Ativo'"
+        elif status_filtro == "inativos":
+            where_sql = "WHERE STATUS = 'Inativo'"
+        else:
+            where_sql = ""
+
         sql = f"""
             SELECT {_SELECT_COLS}
             FROM {TABLE_NAME}
+            {where_sql}
             ORDER BY NOME
         """
 
@@ -92,6 +113,15 @@ class LocalRepository:
             cursor.execute(sql)
             rows = cursor.fetchall()
             return [_row_to_dict(row) for row in rows]
+
+    @staticmethod
+    def inativar(local_id: int, alterado_por: Optional[int] = None) -> bool:
+        """Soft-delete: marca o local como Inativo (preserva FKs)."""
+        return LocalRepository.atualizar(
+            local_id,
+            {'status': 'Inativo'},
+            alterado_por=alterado_por,
+        )
 
     @staticmethod
     def atualizar(local_id: int, dados: Dict[str, Any], alterado_por: Optional[int] = None) -> bool:

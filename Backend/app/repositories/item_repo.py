@@ -7,10 +7,11 @@ from app.core.database import get_cursor
 
 TABLE_NAME = "ESTOQUES_TI_ITENS"
 TABLE_LOCAIS = "ESTOQUES_TI_LOCAIS"
+TABLE_TIPOS = "ESTOQUES_TI_TIPOS_ITEM"
 TABLE_SALDO = "ESTOQUES_TI_ESTOQUE_SALDO"
 
 _SELECT = f"""
-    i.ID_ITEM, i.NOME, i.TIPO, i.DESCRICAO, i.QUANTIDADE, i.UNIDADE,
+    i.ID_ITEM, i.NOME, i.ID_TIPO_ITEM, NVL(t.NOME, i.TIPO) AS TIPO, i.DESCRICAO, i.QUANTIDADE, i.UNIDADE,
     i.ID_LOCAL, i.STATUS, i.DATA_CRIACAO, i.CRIADO_POR,
     i.DATA_ALTERACAO, i.ALTERADO_POR, l.NOME AS NOME_LOCAL
 """
@@ -20,17 +21,18 @@ def _row_to_dict(row) -> Dict[str, Any]:
     return {
         'id_item': row[0],
         'nome': row[1],
-        'tipo': row[2],
-        'descricao': row[3],
-        'quantidade': int(row[4] or 0),
-        'unidade': row[5] or 'UN',
-        'id_local': row[6],
-        'status': row[7] or 'Ativo',
-        'data_criacao': row[8],
-        'criado_por': row[9],
-        'data_alteracao': row[10],
-        'alterado_por': row[11],
-        'nome_local': row[12],
+        'id_tipo_item': row[2],
+        'tipo': row[3],
+        'descricao': row[4],
+        'quantidade': int(row[5] or 0),
+        'unidade': row[6] or 'UN',
+        'id_local': row[7],
+        'status': row[8] or 'Ativo',
+        'data_criacao': row[9],
+        'criado_por': row[10],
+        'data_alteracao': row[11],
+        'alterado_por': row[12],
+        'nome_local': row[13],
     }
 
 
@@ -67,13 +69,22 @@ class ItemRepository:
         )
 
     @staticmethod
+    def _buscar_nome_tipo(cursor, id_tipo_item: int) -> Optional[str]:
+        cursor.execute(
+            f"SELECT NOME FROM {TABLE_TIPOS} WHERE ID_TIPO_ITEM = :id",
+            {'id': id_tipo_item},
+        )
+        row = cursor.fetchone()
+        return row[0] if row else None
+
+    @staticmethod
     def criar(dados: Dict[str, Any], usuario_id: Optional[int] = None) -> int:
         """Cria um novo item e saldo no local informado"""
         sql = f"""
             INSERT INTO {TABLE_NAME}
-                (NOME, TIPO, DESCRICAO, QUANTIDADE, UNIDADE, ID_LOCAL, STATUS, CRIADO_POR)
+                (NOME, ID_TIPO_ITEM, TIPO, DESCRICAO, QUANTIDADE, UNIDADE, ID_LOCAL, STATUS, CRIADO_POR)
             VALUES
-                (:nome, :tipo, :descricao, :quantidade, :unidade, :id_local, :status, :criado_por)
+                (:nome, :id_tipo_item, :tipo, :descricao, :quantidade, :unidade, :id_local, :status, :criado_por)
             RETURNING ID_ITEM INTO :id
         """
 
@@ -81,9 +92,12 @@ class ItemRepository:
             id_var = cursor.var(int)
             quantidade = int(dados.get('quantidade') or 0)
             id_local = dados['id_local']
+            id_tipo_item = dados['id_tipo_item']
+            nome_tipo = ItemRepository._buscar_nome_tipo(cursor, id_tipo_item)
             cursor.execute(sql, {
                 'nome': dados['nome'],
-                'tipo': dados.get('tipo'),
+                'id_tipo_item': id_tipo_item,
+                'tipo': nome_tipo,
                 'descricao': dados.get('descricao'),
                 'quantidade': quantidade,
                 'unidade': dados.get('unidade') or 'UN',
@@ -98,11 +112,12 @@ class ItemRepository:
 
     @staticmethod
     def buscar_por_id(item_id: int) -> Optional[Dict[str, Any]]:
-        """Busca item por ID com nome do local"""
+        """Busca item por ID com nome do local e do tipo"""
         sql = f"""
             SELECT {_SELECT}
             FROM {TABLE_NAME} i
             LEFT JOIN {TABLE_LOCAIS} l ON l.ID_LOCAL = i.ID_LOCAL
+            LEFT JOIN {TABLE_TIPOS} t ON t.ID_TIPO_ITEM = i.ID_TIPO_ITEM
             WHERE i.ID_ITEM = :id
         """
 
@@ -112,25 +127,37 @@ class ItemRepository:
             return _row_to_dict(row) if row else None
 
     @staticmethod
-    def listar_todos(tipo: Optional[str] = None) -> List[Dict[str, Any]]:
-        """Lista todos os itens com nome do local"""
-        if tipo:
-            sql = f"""
-                SELECT {_SELECT}
-                FROM {TABLE_NAME} i
-                LEFT JOIN {TABLE_LOCAIS} l ON l.ID_LOCAL = i.ID_LOCAL
-                WHERE UPPER(i.TIPO) = UPPER(:tipo)
-                ORDER BY i.NOME
-            """
-            params = {'tipo': tipo}
-        else:
-            sql = f"""
-                SELECT {_SELECT}
-                FROM {TABLE_NAME} i
-                LEFT JOIN {TABLE_LOCAIS} l ON l.ID_LOCAL = i.ID_LOCAL
-                ORDER BY i.NOME
-            """
-            params = {}
+    def listar_todos(
+        tipo: Optional[str] = None,
+        id_tipo_item: Optional[int] = None,
+        status_filtro: str = "ativos",
+    ) -> List[Dict[str, Any]]:
+        """Lista itens com nome do local e do tipo. Padrão: apenas STATUS = 'Ativo'."""
+        where = []
+        params: Dict[str, Any] = {}
+
+        if id_tipo_item is not None:
+            where.append("i.ID_TIPO_ITEM = :id_tipo_item")
+            params["id_tipo_item"] = id_tipo_item
+        elif tipo:
+            where.append("UPPER(t.NOME) = UPPER(:tipo)")
+            params["tipo"] = tipo
+
+        if status_filtro == "ativos":
+            where.append("i.STATUS = 'Ativo'")
+        elif status_filtro == "inativos":
+            where.append("i.STATUS = 'Inativo'")
+
+        where_sql = f"WHERE {' AND '.join(where)}" if where else ""
+
+        sql = f"""
+            SELECT {_SELECT}
+            FROM {TABLE_NAME} i
+            LEFT JOIN {TABLE_LOCAIS} l ON l.ID_LOCAL = i.ID_LOCAL
+            LEFT JOIN {TABLE_TIPOS} t ON t.ID_TIPO_ITEM = i.ID_TIPO_ITEM
+            {where_sql}
+            ORDER BY i.NOME
+        """
 
         with get_cursor() as cursor:
             cursor.execute(sql, params)
@@ -139,39 +166,46 @@ class ItemRepository:
 
     @staticmethod
     def atualizar(item_id: int, dados: Dict[str, Any], alterado_por: Optional[int] = None) -> bool:
-        """Atualiza um item e sincroniza saldo se local/quantidade mudarem"""
+        """Atualiza metadados do item. Quantidade é imutável aqui (só via movimentações)."""
+        # Defesa em profundidade: ignora qualquer tentativa de alterar saldo
+        dados = {k: v for k, v in dados.items() if k != 'quantidade'}
+
         campos = []
         params = {'id': item_id, 'alterado_por': alterado_por}
 
         mapeamento = {
             'nome': 'NOME',
-            'tipo': 'TIPO',
+            'id_tipo_item': 'ID_TIPO_ITEM',
             'descricao': 'DESCRICAO',
-            'quantidade': 'QUANTIDADE',
             'unidade': 'UNIDADE',
             'id_local': 'ID_LOCAL',
             'status': 'STATUS',
         }
 
-        for chave, coluna in mapeamento.items():
-            if chave in dados:
-                campos.append(f"{coluna} = :{chave}")
-                params[chave] = dados[chave]
-
-        if not campos:
-            return False
-
-        campos.append("DATA_ALTERACAO = SYSTIMESTAMP")
-        campos.append("ALTERADO_POR = :alterado_por")
-
-        sql = f"UPDATE {TABLE_NAME} SET {', '.join(campos)} WHERE ID_ITEM = :id"
-
         with get_cursor() as cursor:
+            if 'id_tipo_item' in dados and dados['id_tipo_item'] is not None:
+                nome_tipo = ItemRepository._buscar_nome_tipo(cursor, int(dados['id_tipo_item']))
+                campos.append("TIPO = :tipo")
+                params['tipo'] = nome_tipo
+
+            for chave, coluna in mapeamento.items():
+                if chave in dados:
+                    campos.append(f"{coluna} = :{chave}")
+                    params[chave] = dados[chave]
+
+            if not campos:
+                return False
+
+            campos.append("DATA_ALTERACAO = SYSTIMESTAMP")
+            campos.append("ALTERADO_POR = :alterado_por")
+
+            sql = f"UPDATE {TABLE_NAME} SET {', '.join(campos)} WHERE ID_ITEM = :id"
             cursor.execute(sql, params)
             if cursor.rowcount <= 0:
                 return False
 
-            if 'id_local' in dados or 'quantidade' in dados:
+            # Se o local mudou, realinha ESTOQUE_SALDO com a quantidade atual (sem alterá-la)
+            if 'id_local' in dados:
                 cursor.execute(
                     f"SELECT ID_LOCAL, QUANTIDADE FROM {TABLE_NAME} WHERE ID_ITEM = :id",
                     {'id': item_id},
@@ -189,8 +223,17 @@ class ItemRepository:
             return True
 
     @staticmethod
+    def inativar(item_id: int, alterado_por: Optional[int] = None) -> bool:
+        """Soft-delete: marca o item como Inativo (preserva saldo e FKs)."""
+        return ItemRepository.atualizar(
+            item_id,
+            {'status': 'Inativo'},
+            alterado_por=alterado_por,
+        )
+
+    @staticmethod
     def deletar(item_id: int) -> bool:
-        """Deleta saldo e item"""
+        """Deleta fisicamente saldo e item (uso interno)."""
         with get_cursor() as cursor:
             cursor.execute(
                 f"DELETE FROM {TABLE_SALDO} WHERE ID_ITEM = :id",

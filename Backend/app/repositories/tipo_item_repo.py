@@ -103,12 +103,20 @@ class TipoItemRepository:
             return _row_to_dict(row) if row else None
 
     @staticmethod
-    def listar_todos() -> List[Dict[str, Any]]:
-        """Lista todos os tipos de item"""
+    def listar_todos(status_filtro: str = "ativos") -> List[Dict[str, Any]]:
+        """Lista tipos de item. Padrão: apenas STATUS = 'Ativo'."""
+        if status_filtro == "ativos":
+            where_sql = "WHERE t.STATUS = 'Ativo'"
+        elif status_filtro == "inativos":
+            where_sql = "WHERE t.STATUS = 'Inativo'"
+        else:
+            where_sql = ""
+
         sql = f"""
             SELECT {_SELECT}
             FROM {TABLE_NAME} t
             LEFT JOIN {TABLE_USUARIOS} u ON u.ID_USUARIO = t.CRIADO_POR
+            {where_sql}
             ORDER BY t.NOME
         """
 
@@ -148,8 +156,17 @@ class TipoItemRepository:
             return cursor.rowcount > 0
 
     @staticmethod
+    def inativar(tipo_item_id: int, alterado_por: Optional[int] = None) -> bool:
+        """Soft-delete: marca o tipo como Inativo."""
+        return TipoItemRepository.atualizar(
+            tipo_item_id,
+            {'status': 'Inativo'},
+            alterado_por=alterado_por,
+        )
+
+    @staticmethod
     def deletar(tipo_item_id: int) -> bool:
-        """Deleta um tipo de item"""
+        """Deleta fisicamente um tipo de item (uso interno)."""
         sql = f"DELETE FROM {TABLE_NAME} WHERE ID_TIPO_ITEM = :id"
 
         with get_cursor() as cursor:

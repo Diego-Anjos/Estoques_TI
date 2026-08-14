@@ -253,11 +253,11 @@ class TiposItemManager {
 
     getCategoriaText(categoria) {
         const categoriaMap = {
-            'material': 'Material',
-            'equipamento': 'Equipamento',
-            'consumivel': 'Consumível',
-            'ferramenta': 'Ferramenta',
-            'componente': 'Componente'
+            'hardware': 'Hardware',
+            'software': 'Software/Licenças',
+            'redes': 'Redes',
+            'consumivel': 'Consumíveis (Toner/Tinta)',
+            'periferico': 'Periféricos'
         };
         return categoriaMap[categoria] || categoria;
     }
@@ -488,9 +488,9 @@ class TiposItemManager {
         const tiposExemplo = [
             {
                 id: 1,
-                nome: 'Material de Construção',
-                categoria: 'material',
-                descricao: 'Materiais diversos para construção civil',
+                nome: 'Hardware',
+                categoria: 'hardware',
+                descricao: 'Notebooks, desktops, monitores e servidores',
                 status: 'Ativo',
                 dataCriacao: '15/01/2026, 08:00:00',
                 criadoPor: 'Sistema',
@@ -499,9 +499,9 @@ class TiposItemManager {
             },
             {
                 id: 2,
-                nome: 'Equipamento de Informática',
-                categoria: 'equipamento',
-                descricao: 'Equipamentos relacionados a informática',
+                nome: 'Periféricos',
+                categoria: 'periferico',
+                descricao: 'Teclados, mouses, webcams e headsets',
                 status: 'Ativo',
                 dataCriacao: '18/01/2026, 10:30:00',
                 criadoPor: 'Maria',
@@ -510,9 +510,9 @@ class TiposItemManager {
             },
             {
                 id: 3,
-                nome: 'Material de Escritório',
+                nome: 'Consumíveis (Toner/Tinta)',
                 categoria: 'consumivel',
-                descricao: 'Materiais consumíveis de escritório',
+                descricao: 'Toners, cartuchos de tinta e bobinas térmicas',
                 status: 'Ativo',
                 dataCriacao: '22/01/2026, 16:45:00',
                 criadoPor: 'Maria',
@@ -521,9 +521,9 @@ class TiposItemManager {
             },
             {
                 id: 4,
-                nome: 'Ferramentas Manuais',
-                categoria: 'ferramenta',
-                descricao: 'Ferramentas para uso manual',
+                nome: 'Equipamentos de Rede',
+                categoria: 'redes',
+                descricao: 'Switches, roteadores, access points e cabos de rede',
                 status: 'Ativo',
                 dataCriacao: '25/01/2026, 11:15:00',
                 criadoPor: 'Sistema',
@@ -532,9 +532,9 @@ class TiposItemManager {
             },
             {
                 id: 5,
-                nome: 'Componente Eletrônico',
-                categoria: 'componente',
-                descricao: 'Componentes para equipamentos eletrônicos',
+                nome: 'Software/Licenças',
+                categoria: 'software',
+                descricao: 'Licenças e suites de software corporativo',
                 status: 'Inativo',
                 dataCriacao: '28/01/2026, 13:20:00',
                 criadoPor: 'Maria',

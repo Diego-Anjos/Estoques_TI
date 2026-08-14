@@ -1,11 +1,18 @@
 /**
- * Sessão do usuário autenticado (login FastAPI).
- * A API atual não emite JWT; guardamos os dados do login para a sessão.
+ * Sessão do usuário autenticado (login FastAPI + JWT).
  */
 const USER_KEY = 'usuario';
 const TOKEN_KEY = 'token';
 
+/**
+ * Persiste usuário e o JWT retornado pelo backend.
+ * @param {{ id_usuario: number, nome: string, email: string, cargo?: string, access_token: string }} loginResponse
+ */
 export function saveSession(loginResponse) {
+  if (!loginResponse?.access_token) {
+    throw new Error('Login sem access_token — resposta inválida da API');
+  }
+
   const usuario = {
     id_usuario: loginResponse.id_usuario,
     nome: loginResponse.nome,
@@ -13,8 +20,7 @@ export function saveSession(loginResponse) {
     cargo: loginResponse.cargo ?? '',
   };
   localStorage.setItem(USER_KEY, JSON.stringify(usuario));
-  // Marcador de sessão até existir JWT de verdade
-  localStorage.setItem(TOKEN_KEY, `session:${usuario.id_usuario}`);
+  localStorage.setItem(TOKEN_KEY, loginResponse.access_token);
   localStorage.removeItem('usuarioLogado');
   return usuario;
 }
@@ -28,6 +34,11 @@ export function getSession() {
   }
 }
 
+/** Retorna o JWT armazenado (ou null). */
+export function getAccessToken() {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
 export function clearSession() {
   localStorage.removeItem(USER_KEY);
   localStorage.removeItem(TOKEN_KEY);
@@ -35,5 +46,5 @@ export function clearSession() {
 }
 
 export function isAuthenticated() {
-  return Boolean(getSession() && localStorage.getItem(TOKEN_KEY));
+  return Boolean(getSession() && getAccessToken());
 }

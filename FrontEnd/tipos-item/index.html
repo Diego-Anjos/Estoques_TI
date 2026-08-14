@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tipos de Item - Sistema Controle de Estoque</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../shared/css/form-controls.css">
 </head>
 <body>
     <header class="header">
@@ -103,11 +104,11 @@
                     <label>Categoria:</label>
                     <select class="filter-select-new" id="categoria-tipo-select">
                         <option value="">Todas as categorias</option>
-                        <option value="material">Material</option>
-                        <option value="equipamento">Equipamento</option>
-                        <option value="consumivel">Consumível</option>
-                        <option value="ferramenta">Ferramenta</option>
-                        <option value="componente">Componente</option>
+                        <option value="hardware">Hardware</option>
+                        <option value="software">Software/Licenças</option>
+                        <option value="redes">Redes</option>
+                        <option value="consumivel">Consumíveis (Toner/Tinta)</option>
+                        <option value="periferico">Periféricos</option>
                     </select>
                 </div>
                 
@@ -235,22 +236,22 @@
             <form id="tipo-form" class="tipo-form">
                 <div class="form-group">
                     <label for="nome-tipo">Nome do Tipo:</label>
-                    <input type="text" id="nome-tipo" name="nome-tipo" required placeholder="Ex: Material de Construção">
+                    <input type="text" id="nome-tipo" name="nome-tipo" required placeholder="Ex: Hardware">
                 </div>
                 <div class="form-group">
                     <label for="categoria-tipo">Categoria:</label>
                     <select id="categoria-tipo" name="categoria-tipo" required>
                         <option value="">Selecione uma categoria</option>
-                        <option value="material">Material</option>
-                        <option value="equipamento">Equipamento</option>
-                        <option value="consumivel">Consumível</option>
-                        <option value="ferramenta">Ferramenta</option>
-                        <option value="componente">Componente</option>
+                        <option value="hardware">Hardware</option>
+                        <option value="software">Software/Licenças</option>
+                        <option value="redes">Redes</option>
+                        <option value="consumivel">Consumíveis (Toner/Tinta)</option>
+                        <option value="periferico">Periféricos</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="descricao-tipo">Descrição:</label>
-                    <textarea id="descricao-tipo" name="descricao-tipo" rows="3" placeholder="Descrição detalhada do tipo de item"></textarea>
+                    <textarea id="descricao-tipo" name="descricao-tipo" rows="3" placeholder="Ex: Monitores, Teclados, Mouses, Cabos de Rede, Notebooks"></textarea>
                 </div>
                 <div class="form-group">
                     <label for="status-tipo">Status:</label>

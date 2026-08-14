@@ -21,11 +21,11 @@ const form = document.getElementById('tipo-form');
 const modalTitle = document.getElementById('modal-tipo-title');
 const tipoIdInput = document.getElementById('tipo-id');
 const nomeInput = document.getElementById('nome-tipo');
-const categoriaSelect = document.getElementById('categoria-tipo');
 const descricaoInput = document.getElementById('descricao-tipo');
 const statusSelect = document.getElementById('status-tipo');
 const filtroNome = document.getElementById('nome-tipo-input');
 const filtroCategoria = document.getElementById('categoria-tipo-select');
+const filtroStatus = document.getElementById('status-tipo-filtro');
 const greeting = document.getElementById('user-greeting');
 
 function escapeHtml(value) {
@@ -49,15 +49,56 @@ function statusClass(status) {
   return normalized.includes('inativ') ? 'inativo' : 'ativo';
 }
 
+function atualizarFiltroCategorias() {
+  if (!filtroCategoria) return;
+
+  const selecionado = filtroCategoria.value;
+  const nomes = [...new Set(
+    tiposCache
+      .map((tipo) => String(tipo.nome || '').trim())
+      .filter(Boolean)
+  )].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+  filtroCategoria.innerHTML = '<option value="">Todas as categorias</option>';
+  nomes.forEach((nome) => {
+    const option = document.createElement('option');
+    option.value = nome;
+    option.textContent = nome;
+    filtroCategoria.appendChild(option);
+  });
+
+  if (selecionado && nomes.includes(selecionado)) {
+    filtroCategoria.value = selecionado;
+  }
+}
+
 function tiposFiltrados() {
   const nome = (filtroNome?.value || '').trim().toLowerCase();
   const categoria = (filtroCategoria?.value || '').trim().toLowerCase();
 
   return tiposCache.filter((tipo) => {
-    const okNome = !nome || String(tipo.nome || '').toLowerCase().includes(nome);
-    const okCategoria = !categoria || String(tipo.categoria || '').toLowerCase() === categoria;
+    const nomeTipo = String(tipo.nome || '').toLowerCase();
+    const okNome = !nome || nomeTipo.includes(nome);
+    const okCategoria = !categoria || nomeTipo === categoria;
     return okNome && okCategoria;
   });
+}
+
+function toggleFiltroAvancado() {
+  const btn = document.getElementById('btn-filtro-avancado-tipos');
+  const panel = document.getElementById('filtro-avancado-tipos-panel');
+  if (!panel) return;
+
+  const abrir = panel.hasAttribute('hidden');
+  if (abrir) {
+    panel.removeAttribute('hidden');
+    btn?.classList.add('open');
+    btn?.setAttribute('aria-expanded', 'true');
+  } else {
+    panel.setAttribute('hidden', '');
+    btn?.classList.remove('open');
+    btn?.setAttribute('aria-expanded', 'false');
+  }
 }
 
 function renderizarTabela(lista = tiposFiltrados()) {
@@ -66,7 +107,7 @@ function renderizarTabela(lista = tiposFiltrados()) {
   if (!lista.length) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="8" style="text-align:center;padding:1.5rem;color:#6b7280;">
+        <td colspan="7" style="text-align:center;padding:1.5rem;color:#6b7280;">
           Nenhum tipo de item encontrado.
         </td>
       </tr>
@@ -81,7 +122,6 @@ function renderizarTabela(lista = tiposFiltrados()) {
         <tr data-id="${tipo.id_tipo_item}">
           <td class="id-col">${escapeHtml(tipo.id_tipo_item)}</td>
           <td class="name-col">${escapeHtml(tipo.nome)}</td>
-          <td class="category-col">${escapeHtml(tipo.categoria || '—')}</td>
           <td class="description-col">${escapeHtml(tipo.descricao || '—')}</td>
           <td class="status-col">
             <span class="status ${statusClass(status)}">${escapeHtml(status)}</span>
@@ -96,7 +136,7 @@ function renderizarTabela(lista = tiposFiltrados()) {
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </button>
-              <button type="button" class="btn-delete" data-action="delete" data-id="${tipo.id_tipo_item}" title="Excluir">
+              <button type="button" class="btn-delete" data-action="delete" data-id="${tipo.id_tipo_item}" title="Inativar">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <polyline points="3,6 5,6 21,6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                   <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -112,12 +152,15 @@ function renderizarTabela(lista = tiposFiltrados()) {
 
 async function carregarTipos() {
   try {
-    const data = await api.get('/tipos-item/');
+    const status = filtroStatus?.value || 'ativos';
+    const data = await api.get(`/tipos-item/?status=${encodeURIComponent(status)}`);
     tiposCache = Array.isArray(data) ? data : [];
+    atualizarFiltroCategorias();
     renderizarTabela();
   } catch (error) {
     showNotification(error.message || 'Não foi possível carregar os tipos.', 'error');
     tiposCache = [];
+    atualizarFiltroCategorias();
     renderizarTabela([]);
   }
 }
@@ -131,7 +174,6 @@ function abrirModal(tipo = null) {
   }
 
   if (nomeInput) nomeInput.value = tipo?.nome || '';
-  if (categoriaSelect) categoriaSelect.value = tipo?.categoria || '';
   if (descricaoInput) descricaoInput.value = tipo?.descricao || '';
   if (statusSelect) statusSelect.value = tipo?.status || 'Ativo';
 
@@ -151,7 +193,6 @@ async function salvarTipo(event) {
   event.preventDefault();
 
   const nome = (nomeInput?.value || '').trim();
-  const categoria = (categoriaSelect?.value || '').trim();
   const descricao = (descricaoInput?.value || '').trim();
   const status = statusSelect?.value || 'Ativo';
 
@@ -159,14 +200,9 @@ async function salvarTipo(event) {
     showNotification('Informe um nome com pelo menos 2 caracteres.', 'warning');
     return;
   }
-  if (!categoria) {
-    showNotification('Selecione uma categoria.', 'warning');
-    return;
-  }
 
   const payload = {
     nome,
-    categoria,
     descricao: descricao || null,
     status,
   };
@@ -191,18 +227,18 @@ function confirmarExclusao(id) {
   const nome = tipo?.nome ? `"${tipo.nome}"` : 'este tipo';
 
   showConfirmModal(
-    'Excluir tipo de item',
-    `Tem certeza que deseja excluir ${nome}? Esta ação não poderá ser desfeita.`,
+    'Inativar tipo de item',
+    `Tem certeza que deseja inativar ${nome}? Ele deixará de aparecer na listagem padrão, mas poderá ser reativado depois.`,
     async () => {
       try {
         await api.delete(`/tipos-item/${id}`);
-        showNotification('Tipo excluído com sucesso!', 'success');
+        showNotification('Tipo inativado com sucesso!', 'success');
         await carregarTipos();
       } catch (error) {
-        showNotification(error.message || 'Não foi possível excluir o tipo.', 'error');
+        showNotification(error.message || 'Não foi possível inativar o tipo.', 'error');
       }
     },
-    { confirmText: 'Sim, excluir', cancelText: 'Cancelar', danger: true }
+    { confirmText: 'Sim, inativar', cancelText: 'Cancelar', danger: true }
   );
 }
 
@@ -274,7 +310,17 @@ function setupEventListeners() {
     e.preventDefault();
     if (filtroNome) filtroNome.value = '';
     if (filtroCategoria) filtroCategoria.value = '';
-    renderizarTabela();
+    if (filtroStatus) filtroStatus.value = 'ativos';
+    carregarTipos();
+  });
+
+  document.getElementById('btn-filtro-avancado-tipos')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    toggleFiltroAvancado();
+  });
+
+  filtroStatus?.addEventListener('change', () => {
+    carregarTipos();
   });
 
   tbody?.addEventListener('click', (e) => {

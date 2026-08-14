@@ -8,14 +8,16 @@ from datetime import datetime
 
 @dataclass
 class EstoqueMovimentacao:
-    """Representa uma movimentação de estoque (entrada/saída)"""
+    """Representa uma movimentação de estoque (entrada/saída/devolução)"""
     id_movimentacao: Optional[int] = None
     id_item: int = 0
     id_local_origem: Optional[int] = None
     id_local_destino: Optional[int] = None
     quantidade: int = 0
-    tipo_movimentacao: str = ""  # ENTRADA | SAIDA
+    tipo_movimentacao: str = ""  # ENTRADA | SAIDA | DEVOLUCAO
     observacao: Optional[str] = None
+    setor_destino: Optional[str] = None
+    setor_origem: Optional[str] = None
     data_movimentacao: Optional[datetime] = None
     usuario_id: Optional[int] = None
     nome_item: Optional[str] = None
@@ -30,6 +32,8 @@ class EstoqueMovimentacao:
             'quantidade': self.quantidade,
             'tipo_movimentacao': self.tipo_movimentacao,
             'observacao': self.observacao,
+            'setor_destino': self.setor_destino,
+            'setor_origem': self.setor_origem,
             'data_movimentacao': self.data_movimentacao,
             'usuario_id': self.usuario_id,
             'nome_item': self.nome_item,

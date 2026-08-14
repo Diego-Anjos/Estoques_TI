@@ -25,7 +25,8 @@ class Item:
     criado_por: Optional[int] = None
     data_alteracao: Optional[datetime] = None
     alterado_por: Optional[int] = None
-    nome_local: Optional[str] = None
+    nome_local: Optional[str] = None  # join com locais
+    # tipo: nome do tipo via join com tipos_item (preenchido na leitura)
 
     def to_dict(self) -> dict:
         """Converte para dicionário"""

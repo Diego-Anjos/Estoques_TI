@@ -1,0 +1,162 @@
+/**
+ * Normalização dos campos de formulário.
+ *
+ * Carregar por último no <head>. Os seletores do tema escuro usam o prefixo
+ * `:is(html, body)[data-theme="dark"]` para vencer as regras `[data-theme="dark"]`
+ * declaradas nos style.css de cada página. O `:is(html, body)` é necessário porque
+ * as páginas novas marcam o <html> (theme-boot.js) e as legadas marcam só o <body>.
+ */
+
+/* ---------------------------------------------------------------------------
+   1. Seta única no select (ambos os temas)
+
+   Sem `appearance: none` em todos os prefixos, o navegador mantém a seta nativa
+   e ela fica sobreposta à seta desenhada via background-image. O `:where()` zera
+   a especificidade: quem já define a própria seta (posição, tamanho, padding)
+   continua no comando, e quem não define recebe estes valores como padrão.
+   Selects sem seta customizada, como o .items-select da paginação, ficam de fora
+   e seguem usando a seta nativa.
+   --------------------------------------------------------------------------- */
+
+:where(.filter-select-new, .form-group select) {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1em;
+    padding-right: 2.5rem;
+    cursor: pointer;
+}
+
+/* IE/Edge legado desenhava uma seta extra própria */
+.filter-select-new::-ms-expand,
+.form-group select::-ms-expand {
+    display: none;
+}
+
+/* ---------------------------------------------------------------------------
+   2. Tema escuro
+
+   Faz o navegador renderizar widgets nativos (popup do <select>, scrollbars,
+   autofill) na variante escura — sem isso o popup do dropdown fica com o texto
+   escuro padrão do sistema sobre fundo escuro.
+   --------------------------------------------------------------------------- */
+
+:is(html, body)[data-theme="dark"] {
+    color-scheme: dark;
+}
+
+/* Campos de texto, selects e textareas */
+
+:is(html, body)[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
+:is(html, body)[data-theme="dark"] select,
+:is(html, body)[data-theme="dark"] textarea,
+:is(html, body)[data-theme="dark"] .filter-input-new,
+:is(html, body)[data-theme="dark"] .filter-select-new,
+:is(html, body)[data-theme="dark"] .page-input,
+:is(html, body)[data-theme="dark"] .items-select,
+:is(html, body)[data-theme="dark"] .form-group input,
+:is(html, body)[data-theme="dark"] .form-group select,
+:is(html, body)[data-theme="dark"] .form-group textarea {
+    background-color: #374151;
+    border-color: #6b7280;
+    color: #f9fafb;
+}
+
+:is(html, body)[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="reset"]):focus,
+:is(html, body)[data-theme="dark"] select:focus,
+:is(html, body)[data-theme="dark"] textarea:focus,
+:is(html, body)[data-theme="dark"] .filter-input-new:focus,
+:is(html, body)[data-theme="dark"] .filter-select-new:focus,
+:is(html, body)[data-theme="dark"] .form-group input:focus,
+:is(html, body)[data-theme="dark"] .form-group select:focus,
+:is(html, body)[data-theme="dark"] .form-group textarea:focus {
+    background-color: #1f2937;
+    color: #ffffff;
+}
+
+/* A seta vinha desenhada em cinza escuro (#6B7280). Trocar só a imagem preserva
+   o background-position/size definido por cada página. */
+:is(html, body)[data-theme="dark"] .filter-select-new,
+:is(html, body)[data-theme="dark"] .form-group select {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e5e7eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+}
+
+/* Opções do dropdown */
+
+:is(html, body)[data-theme="dark"] select option,
+:is(html, body)[data-theme="dark"] optgroup {
+    background-color: #1f2937;
+    color: #f9fafb;
+}
+
+:is(html, body)[data-theme="dark"] select option:checked,
+:is(html, body)[data-theme="dark"] select option:hover,
+:is(html, body)[data-theme="dark"] select option:focus {
+    background-color: #4b5563;
+    color: #ffffff;
+}
+
+/* Opção vazia ("Selecione um tipo", "Todos os status") continua legível,
+   apenas discreta em relação às opções reais */
+:is(html, body)[data-theme="dark"] select option[value=""] {
+    color: #d1d5db;
+}
+
+/* Placeholders */
+
+:is(html, body)[data-theme="dark"] input::placeholder,
+:is(html, body)[data-theme="dark"] textarea::placeholder,
+:is(html, body)[data-theme="dark"] .filter-input-new::placeholder,
+:is(html, body)[data-theme="dark"] .form-group input::placeholder,
+:is(html, body)[data-theme="dark"] .form-group textarea::placeholder {
+    color: #cbd5e1;
+    opacity: 1;
+}
+
+:is(html, body)[data-theme="dark"] input::-webkit-input-placeholder,
+:is(html, body)[data-theme="dark"] textarea::-webkit-input-placeholder {
+    color: #cbd5e1;
+    opacity: 1;
+}
+
+:is(html, body)[data-theme="dark"] input::-moz-placeholder,
+:is(html, body)[data-theme="dark"] textarea::-moz-placeholder {
+    color: #cbd5e1;
+    opacity: 1;
+}
+
+/* Select ainda no valor vazio se comporta como placeholder */
+:is(html, body)[data-theme="dark"] select:invalid,
+:is(html, body)[data-theme="dark"] select:has(option[value=""]:checked) {
+    color: #cbd5e1;
+}
+
+/* Rótulos e textos auxiliares */
+
+:is(html, body)[data-theme="dark"] .filter-group label,
+:is(html, body)[data-theme="dark"] .form-group label,
+:is(html, body)[data-theme="dark"] .form-group small,
+:is(html, body)[data-theme="dark"] .form-hint {
+    color: #e5e7eb;
+}
+
+/* O autofill do Chrome repinta o campo de branco com texto preto */
+:is(html, body)[data-theme="dark"] input:-webkit-autofill,
+:is(html, body)[data-theme="dark"] input:-webkit-autofill:hover,
+:is(html, body)[data-theme="dark"] input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #f9fafb;
+    -webkit-box-shadow: 0 0 0 1000px #374151 inset;
+    caret-color: #f9fafb;
+}
+
+:is(html, body)[data-theme="dark"] input:disabled,
+:is(html, body)[data-theme="dark"] select:disabled,
+:is(html, body)[data-theme="dark"] textarea:disabled {
+    background-color: #2d3748;
+    color: #9ca3af;
+    -webkit-text-fill-color: #9ca3af;
+}

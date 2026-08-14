@@ -53,4 +53,6 @@ class UsuarioLoginResponse(BaseModel):
     nome: str
     email: str
     cargo: Optional[str] = None
+    access_token: str
+    token_type: str = "bearer"
     mensagem: str = "Login realizado com sucesso"

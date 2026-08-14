@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastro de Itens - Sistema Controle de Estoque</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../shared/css/form-controls.css">
 </head>
 <body>
     <header class="header">
@@ -103,11 +104,11 @@
                     <label>Tipo:</label>
                     <select class="filter-select-new" id="tipo-item-select">
                         <option value="">Todos os tipos</option>
-                        <option value="1">Material de Construção</option>
-                        <option value="2">Equipamento de Informática</option>
-                        <option value="3">Material de Escritório</option>
-                        <option value="4">Ferramentas Manuais</option>
-                        <option value="5">Componente Eletrônico</option>
+                        <option value="1">Hardware</option>
+                        <option value="2">Periféricos</option>
+                        <option value="3">Consumíveis (Toner/Tinta)</option>
+                        <option value="4">Equipamentos de Rede</option>
+                        <option value="5">Software/Licenças</option>
                     </select>
                 </div>
 
@@ -245,22 +246,22 @@
             <form id="item-form" class="item-form">
                 <div class="form-group">
                     <label for="nome-item">Nome do Item:</label>
-                    <input type="text" id="nome-item" name="nome-item" required placeholder="Ex: Martelo de Unha">
+                    <input type="text" id="nome-item" name="nome-item" required placeholder="Ex: Mouse Óptico">
                 </div>
                 <div class="form-group">
                     <label for="tipo-item">Tipo:</label>
                     <select id="tipo-item" name="tipo-item" required>
                         <option value="">Selecione um tipo</option>
-                        <option value="1">Material de Construção</option>
-                        <option value="2">Equipamento de Informática</option>
-                        <option value="3">Material de Escritório</option>
-                        <option value="4">Ferramentas Manuais</option>
-                        <option value="5">Componente Eletrônico</option>
+                        <option value="1">Hardware</option>
+                        <option value="2">Periféricos</option>
+                        <option value="3">Consumíveis (Toner/Tinta)</option>
+                        <option value="4">Equipamentos de Rede</option>
+                        <option value="5">Software/Licenças</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="descricao-item">Descrição:</label>
-                    <textarea id="descricao-item" name="descricao-item" rows="3" placeholder="Descrição detalhada do item"></textarea>
+                    <textarea id="descricao-item" name="descricao-item" rows="3" placeholder="Ex: Monitores, Teclados, Mouses, Cabos de Rede, Notebooks"></textarea>
                 </div>
                 <div class="form-group">
                     <label for="quantidade-item">Quantidade:</label>

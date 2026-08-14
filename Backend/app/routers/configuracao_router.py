@@ -1,12 +1,17 @@
 """
 Router para Configurações do Sistema
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from app.schemas.configuracao import ConfiguracaoResponse, ConfiguracaoUpdate
 from app.repositories.configuracao_repo import ConfiguracaoRepository
+from app.core.deps import get_current_active_user
 
 
-router = APIRouter(prefix="/configuracoes", tags=["Configurações"])
+router = APIRouter(
+    prefix="/configuracoes",
+    tags=["Configurações"],
+    dependencies=[Depends(get_current_active_user)],
+)
 
 
 @router.get("/", response_model=ConfiguracaoResponse)

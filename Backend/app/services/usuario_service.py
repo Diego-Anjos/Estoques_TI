@@ -5,7 +5,7 @@ from typing import List, Optional
 from fastapi import HTTPException, status
 from app.repositories.usuario_repo import UsuarioRepository
 from app.schemas.usuario import UsuarioCreate, UsuarioUpdate, UsuarioResponse, UsuarioLogin, UsuarioLoginResponse
-from app.core.security import verify_password
+from app.core.security import create_access_token, verify_password
 
 
 class UsuarioService:
@@ -13,27 +13,46 @@ class UsuarioService:
     
     @staticmethod
     def criar_usuario(dados: UsuarioCreate, usuario_id: Optional[int] = None) -> UsuarioResponse:
-        """Cria um novo usuário"""
-        # Verifica se email já existe
+        """
+        Cria um novo usuário.
+        Se o e-mail pertencer a um usuário inativo (ATIVO='N'), reativa o registro
+        (UPDATE nome/cargo/senha + ATIVO='S') em vez de inserir outro.
+        """
         usuario_existente = UsuarioRepository.buscar_por_email(dados.email)
         if usuario_existente:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email já cadastrado"
+            if usuario_existente.get("ativo") == "S":
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Email já cadastrado",
+                )
+
+            # Soft-deleted: reativa preservando o ID e o histórico
+            sucesso = UsuarioRepository.reativar(
+                usuario_existente["id_usuario"],
+                dados.model_dump(),
+                alterado_por=usuario_id,
             )
-        
-        # Cria usuário
-        dados_dict = dados.model_dump()
-        novo_id = UsuarioRepository.criar(dados_dict, usuario_id)
-        
-        # Busca e retorna usuário criado
+            if not sucesso:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Erro ao reativar usuário",
+                )
+
+            usuario = UsuarioRepository.buscar_por_id(usuario_existente["id_usuario"])
+            if not usuario:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Erro ao carregar usuário reativado",
+                )
+            return UsuarioResponse(**usuario)
+
+        novo_id = UsuarioRepository.criar(dados.model_dump(), usuario_id)
         usuario = UsuarioRepository.buscar_por_id(novo_id)
         if not usuario:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Erro ao criar usuário"
+                detail="Erro ao criar usuário",
             )
-        
         return UsuarioResponse(**usuario)
     
     @staticmethod
@@ -53,15 +72,15 @@ class UsuarioService:
         email: Optional[str] = None,
         skip: int = 0,
         limit: Optional[int] = None,
-        apenas_ativos: Optional[bool] = None,
+        status_filtro: str = "ativos",
     ) -> List[UsuarioResponse]:
-        """Lista usuários com filtros e paginação opcionais."""
+        """Lista usuários. Por padrão retorna apenas ativos (ATIVO='S')."""
         usuarios = UsuarioRepository.listar(
             nome=nome,
             email=email,
             skip=skip,
             limit=limit,
-            apenas_ativos=apenas_ativos,
+            status_filtro=status_filtro,
         )
         return [UsuarioResponse(**u) for u in usuarios]
     
@@ -132,25 +151,34 @@ class UsuarioService:
     
     @staticmethod
     def login(dados: UsuarioLogin) -> UsuarioLoginResponse:
-        """Realiza login do usuário"""
-        # Busca usuário por email
+        """Realiza login do usuário e emite JWT."""
         usuario = UsuarioRepository.buscar_por_email(dados.email)
         if not usuario:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Email ou senha incorretos"
+                detail="Email ou senha incorretos",
             )
-        
-        # Verifica senha
-        if not verify_password(dados.senha, usuario['senha_hash']):
+
+        if not verify_password(dados.senha, usuario["senha_hash"]):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Email ou senha incorretos"
+                detail="Email ou senha incorretos",
             )
-        
+
+        if usuario.get("ativo") != "S":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Usuário inativo",
+            )
+
+        token = create_access_token(
+            subject=usuario["id_usuario"],
+            extra_claims={"email": usuario["email"]},
+        )
         return UsuarioLoginResponse(
-            id_usuario=usuario['id_usuario'],
-            nome=usuario['nome'],
-            email=usuario['email'],
-            cargo=usuario.get('cargo'),
+            id_usuario=usuario["id_usuario"],
+            nome=usuario["nome"],
+            email=usuario["email"],
+            cargo=usuario.get("cargo"),
+            access_token=token,
         )

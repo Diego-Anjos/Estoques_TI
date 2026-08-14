@@ -7,9 +7,9 @@ from datetime import datetime
 
 
 class TipoItemBase(BaseModel):
-    """Schema base de tipo de item (campos da UI)"""
-    nome: str = Field(..., min_length=2, max_length=120, description="Nome do tipo")
-    categoria: Optional[str] = Field(None, max_length=80, description="Categoria (Hardware, Software, etc.)")
+    """Schema base de tipo de item (categoria: Hardware, Periféricos, Redes, etc.)"""
+    nome: str = Field(..., min_length=2, max_length=120, description="Nome da categoria/tipo (ex: Hardware)")
+    categoria: Optional[str] = Field(None, max_length=80, description="Campo legado (opcional)")
     descricao: Optional[str] = Field(None, max_length=400, description="Descrição do tipo")
     status: str = Field("Ativo", max_length=20, description="Status: Ativo ou Inativo")
 

@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="../../../../shared/css/responsive.css">
     <link rel="stylesheet" href="../../../../shared/css/notify.css">
     <link rel="stylesheet" href="../../../../shared/css/confirmModal.css">
+    <link rel="stylesheet" href="../../../../shared/css/form-controls.css">
 </head>
 <body>
     <aside id="app-sidebar" class="app-sidebar" aria-label="Menu principal">
@@ -291,12 +292,22 @@
 
                 <!-- Filtro avançado -->
                 <div class="advanced-filter">
-                    <button class="btn-advanced-filter" id="btn-filtro-avancado">
+                    <button class="btn-advanced-filter" id="btn-filtro-avancado" type="button" aria-expanded="false">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                         Filtro avançado
                     </button>
+                    <div class="advanced-filter-panel" id="filtro-avancado-usuarios-panel" hidden>
+                        <div class="filter-group">
+                            <label for="status-usuario-filtro">Status:</label>
+                            <select class="filter-select-new" id="status-usuario-filtro">
+                                <option value="ativos" selected>Apenas Ativos</option>
+                                <option value="inativos">Apenas Inativos</option>
+                                <option value="todos">Todos</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -534,10 +545,10 @@
                     <label for="categoria">Categoria:</label>
                     <select id="categoria" name="categoria" required>
                         <option value="">Selecione uma categoria</option>
-                        <option value="eletronicos">Eletrônicos</option>
-                        <option value="roupas">Roupas</option>
-                        <option value="casa">Casa e Jardim</option>
-                        <option value="livros">Livros</option>
+                        <option value="hardware">Hardware</option>
+                        <option value="perifericos">Periféricos</option>
+                        <option value="redes">Redes</option>
+                        <option value="consumivel">Consumíveis (Toner/Tinta)</option>
                     </select>
                 </div>
                 <div class="form-group">

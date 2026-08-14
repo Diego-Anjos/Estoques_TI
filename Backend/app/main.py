@@ -5,8 +5,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from app.core.config import settings
+from app.core.config import settings, validate_jwt_secret_key
 from app.core.database import init_pool, close_pool
+from app.core.exception_handlers import register_exception_handlers
 from app.routers import (
     usuario_router,
     item_router,
@@ -26,7 +27,13 @@ from app.routers import (
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Gerencia o ciclo de vida da aplicação"""
-    # Startup
+    # Startup — revalida JWT (falha clara no terminal se .env estiver errado)
+    try:
+        validate_jwt_secret_key(settings.JWT_SECRET_KEY)
+    except ValueError as exc:
+        print(str(exc), flush=True)
+        raise RuntimeError(str(exc)) from exc
+
     print("🚀 Iniciando aplicação...")
     init_pool()
     yield
@@ -57,14 +64,19 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# FK / IntegrityError → HTTP 400 amigável (em vez de 500)
+register_exception_handlers(app)
+
 
 # Configuração CORS — origens do frontend em desenvolvimento local
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",  # Vite
+        "http://localhost:5174",  # Vite (porta alternativa)
         "http://localhost:3000",  # React / serve alternativo
         "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
         "http://127.0.0.1:3000",
     ],
     allow_credentials=True,

@@ -25,9 +25,54 @@ const itemSelect = document.getElementById('item-select');
 const tipoSelect = document.getElementById('tipo');
 const quantidadeInput = document.getElementById('quantidade');
 const observacaoInput = document.getElementById('observacao');
+const setorDestinoInput = document.getElementById('setor-destino');
+const grupoSetorDestino = document.getElementById('grupo-setor-destino');
+const setorOrigemInput = document.getElementById('setor-origem');
+const grupoSetorOrigem = document.getElementById('grupo-setor-origem');
 const filtroItem = document.getElementById('filtro-item');
 const filtroTipo = document.getElementById('filtro-tipo');
 const greeting = document.getElementById('user-greeting');
+
+function normalizarTipoUi(tipo) {
+  return String(tipo || '')
+    .trim()
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function ehSaida(tipo) {
+  const t = normalizarTipoUi(tipo);
+  return t === 'SAIDA' || t === 'S' || t.startsWith('SAID');
+}
+
+function ehDevolucao(tipo) {
+  const t = normalizarTipoUi(tipo);
+  return t === 'DEVOLUCAO' || t === 'D' || t.startsWith('DEVOL');
+}
+
+function atualizarCamposSetor() {
+  const saida = ehSaida(tipoSelect?.value);
+  const devolucao = ehDevolucao(tipoSelect?.value);
+
+  if (grupoSetorDestino) {
+    if (saida) {
+      grupoSetorDestino.classList.remove('hidden');
+    } else {
+      grupoSetorDestino.classList.add('hidden');
+      if (setorDestinoInput) setorDestinoInput.value = '';
+    }
+  }
+
+  if (grupoSetorOrigem) {
+    if (devolucao) {
+      grupoSetorOrigem.classList.remove('hidden');
+    } else {
+      grupoSetorOrigem.classList.add('hidden');
+      if (setorOrigemInput) setorOrigemInput.value = '';
+    }
+  }
+}
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -49,18 +94,44 @@ function labelTipo(tipo) {
   const t = String(tipo || '').toUpperCase();
   if (t === 'ENTRADA') return 'Entrada';
   if (t === 'SAIDA') return 'Saída';
+  if (t === 'DEVOLUCAO') return 'Devolução';
   return tipo || '—';
 }
 
-function movimentacoesFiltradas() {
-  const nome = (filtroItem?.value || '').trim().toLowerCase();
-  const tipo = (filtroTipo?.value || '').trim().toUpperCase();
+function classeTipoBadge(tipo) {
+  const t = String(tipo || '').toUpperCase();
+  if (t === 'ENTRADA') return 'entrada';
+  if (t === 'SAIDA') return 'saida';
+  if (t === 'DEVOLUCAO') return 'devolucao';
+  return 'saida';
+}
 
-  return movimentacoesCache.filter((mov) => {
-    const okNome = !nome || String(mov.nome_item || '').toLowerCase().includes(nome);
-    const okTipo = !tipo || String(mov.tipo_movimentacao || '').toUpperCase() === tipo;
-    return okNome && okTipo;
-  });
+/** Texto da coluna Setor: destino (saída) ou origem (devolução). */
+function textoSetorHistorico(mov) {
+  const tipo = String(mov.tipo_movimentacao || '').toUpperCase();
+  if (tipo === 'SAIDA' && mov.setor_destino) {
+    return mov.setor_destino;
+  }
+  if (tipo === 'DEVOLUCAO' && mov.setor_origem) {
+    return `De: ${mov.setor_origem}`;
+  }
+  return '—';
+}
+
+/** Query params esperados por GET /movimentacoes/ */
+function filtrosAtuais() {
+  const params = new URLSearchParams();
+  const nome = (filtroItem?.value || '').trim();
+  const tipo = (filtroTipo?.value || '').trim();
+
+  if (nome) params.set('item', nome);
+  if (tipo) params.set('tipo', tipo);
+
+  return params;
+}
+
+function temFiltroAtivo() {
+  return Boolean((filtroItem?.value || '').trim() || (filtroTipo?.value || '').trim());
 }
 
 function renderizarSaldo() {
@@ -90,14 +161,17 @@ function renderizarSaldo() {
     .join('');
 }
 
-function renderizarHistorico(lista = movimentacoesFiltradas()) {
+function renderizarHistorico(lista = movimentacoesCache) {
   if (!tbody) return;
 
   if (!lista.length) {
+    const mensagem = temFiltroAtivo()
+      ? 'Nenhuma movimentação encontrada para os filtros aplicados.'
+      : 'Nenhuma movimentação registrada. O saldo inicial informado no cadastro do item não gera movimentação — use o botão + para registrar uma entrada, saída ou devolução.';
     tbody.innerHTML = `
       <tr>
-        <td colspan="5" style="text-align:center;padding:1.5rem;color:#6b7280;">
-          Nenhuma movimentação encontrada.
+        <td colspan="6" style="text-align:center;padding:1.5rem;color:#6b7280;">
+          ${mensagem}
         </td>
       </tr>
     `;
@@ -107,13 +181,13 @@ function renderizarHistorico(lista = movimentacoesFiltradas()) {
   tbody.innerHTML = lista
     .map((mov) => {
       const tipo = String(mov.tipo_movimentacao || '').toUpperCase();
-      const tipoClass = tipo === 'ENTRADA' ? 'entrada' : 'saida';
       return `
         <tr>
           <td>${escapeHtml(formatarDataHora(mov.data_movimentacao))}</td>
           <td>${escapeHtml(mov.nome_item || '—')}</td>
-          <td><span class="tipo-badge ${tipoClass}">${escapeHtml(labelTipo(tipo))}</span></td>
+          <td><span class="tipo-badge ${classeTipoBadge(tipo)}">${escapeHtml(labelTipo(tipo))}</span></td>
           <td>${escapeHtml(mov.quantidade)}</td>
+          <td>${escapeHtml(textoSetorHistorico(mov))}</td>
           <td>${escapeHtml(mov.observacao || '—')}</td>
         </tr>
       `;
@@ -147,8 +221,10 @@ async function carregarOpcoesItens() {
 }
 
 async function carregarMovimentacoes() {
+  const query = filtrosAtuais().toString();
+
   try {
-    const data = await api.get('/movimentacoes/');
+    const data = await api.get(`/movimentacoes/${query ? `?${query}` : ''}`);
     movimentacoesCache = Array.isArray(data) ? data : [];
     renderizarHistorico();
   } catch (error) {
@@ -160,6 +236,7 @@ async function carregarMovimentacoes() {
 
 function abrirModal() {
   form?.reset();
+  atualizarCamposSetor();
   modal?.classList.add('active');
   itemSelect?.focus();
 }
@@ -167,6 +244,7 @@ function abrirModal() {
 function fecharModal() {
   modal?.classList.remove('active');
   form?.reset();
+  atualizarCamposSetor();
 }
 
 async function salvarMovimentacao(event) {
@@ -176,6 +254,8 @@ async function salvarMovimentacao(event) {
   const tipo = (tipoSelect?.value || '').trim();
   const quantidade = Number(quantidadeInput?.value || 0);
   const observacao = (observacaoInput?.value || '').trim();
+  const setorDestino = (setorDestinoInput?.value || '').trim();
+  const setorOrigem = (setorOrigemInput?.value || '').trim();
 
   if (!idItem) {
     showNotification('Selecione um item.', 'warning');
@@ -195,6 +275,8 @@ async function salvarMovimentacao(event) {
     tipo_movimentacao: tipo,
     quantidade,
     observacao: observacao || null,
+    setor_destino: ehSaida(tipo) && setorDestino ? setorDestino : null,
+    setor_origem: ehDevolucao(tipo) && setorOrigem ? setorOrigem : null,
     usuario_id: sessao?.id_usuario || null,
   };
 
@@ -273,16 +355,25 @@ function setupEventListeners() {
 
   form?.addEventListener('submit', salvarMovimentacao);
 
-  document.getElementById('btn-buscar-estoque')?.addEventListener('click', (e) => {
+  tipoSelect?.addEventListener('change', atualizarCamposSetor);
+
+  document.getElementById('btn-buscar-estoque')?.addEventListener('click', async (e) => {
     e.preventDefault();
-    renderizarHistorico();
+    await carregarMovimentacoes();
   });
 
-  document.getElementById('btn-limpar-estoque')?.addEventListener('click', (e) => {
+  document.getElementById('btn-limpar-estoque')?.addEventListener('click', async (e) => {
     e.preventDefault();
     if (filtroItem) filtroItem.value = '';
     if (filtroTipo) filtroTipo.value = '';
-    renderizarHistorico();
+    await carregarMovimentacoes();
+  });
+
+  filtroItem?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      carregarMovimentacoes();
+    }
   });
 
   document.getElementById('theme-toggle')?.addEventListener('click', (e) => {

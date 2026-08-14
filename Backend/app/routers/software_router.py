@@ -1,7 +1,7 @@
 """
 Router para endpoints de Software/Licenças
 """
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Depends, status
 from typing import List
 from app.schemas.software import (
     SoftwareCreate, 
@@ -11,9 +11,14 @@ from app.schemas.software import (
     SoftwareAtribuicaoResponse
 )
 from app.services.software_service import SoftwareService
+from app.core.deps import get_current_active_user
 
 
-router = APIRouter(prefix="/software", tags=["Software/Licenças"])
+router = APIRouter(
+    prefix="/software",
+    tags=["Software/Licenças"],
+    dependencies=[Depends(get_current_active_user)],
+)
 
 
 @router.post("/", response_model=SoftwareResponse, status_code=status.HTTP_201_CREATED)
