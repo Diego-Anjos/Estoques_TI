@@ -1,8 +1,8 @@
 """
 Router para endpoints de Usuários
 """
-from fastapi import APIRouter, status
-from typing import List
+from fastapi import APIRouter, status, Query
+from typing import List, Optional
 from app.schemas.usuario import UsuarioCreate, UsuarioUpdate, UsuarioResponse, UsuarioLogin, UsuarioLoginResponse
 from app.services.usuario_service import UsuarioService
 
@@ -23,9 +23,24 @@ def login(dados: UsuarioLogin):
 
 
 @router.get("/", response_model=List[UsuarioResponse])
-def listar_usuarios():
-    """Lista todos os usuários"""
-    return UsuarioService.listar_usuarios()
+def listar_usuarios(
+    nome: Optional[str] = Query(None, description="Filtro parcial por nome"),
+    email: Optional[str] = Query(None, description="Filtro parcial por email"),
+    skip: int = Query(0, ge=0, description="Registros a pular (paginação)"),
+    limit: Optional[int] = Query(None, ge=1, le=500, description="Máximo de registros"),
+    apenas_ativos: Optional[bool] = Query(
+        None,
+        description="True = só ativos, False = só inativos, omitir = todos",
+    ),
+):
+    """Lista usuários (Oracle) com filtros e paginação opcionais."""
+    return UsuarioService.listar_usuarios(
+        nome=nome,
+        email=email,
+        skip=skip,
+        limit=limit,
+        apenas_ativos=apenas_ativos,
+    )
 
 
 @router.get("/{usuario_id}", response_model=UsuarioResponse)
@@ -42,5 +57,5 @@ def atualizar_usuario(usuario_id: int, dados: UsuarioUpdate):
 
 @router.delete("/{usuario_id}", status_code=status.HTTP_200_OK)
 def deletar_usuario(usuario_id: int):
-    """Deleta um usuário"""
+    """Inativa um usuário (soft delete)."""
     return UsuarioService.deletar_usuario(usuario_id)

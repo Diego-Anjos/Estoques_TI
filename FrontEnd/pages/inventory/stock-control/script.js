@@ -1,280 +1,324 @@
-class ControleEstoqueManager {
-    constructor() {
-        this.storageKey = 'controle_estoque_movimentos';
-        this.movimentos = JSON.parse(localStorage.getItem(this.storageKey)) || [];
-        this.movimentoEditando = null;
-        this.init();
-    }
+import { api } from '../../../shared/js/api.js';
+import { getSession, isAuthenticated, clearSession } from '../../../shared/js/auth.js';
+import { showNotification } from '../../../shared/js/notify.js';
+import { showConfirmModal } from '../../../shared/js/confirmModal.js';
 
-    init() {
-        this.setupDropdown();
-        this.setupModal();
-        this.setupBotoes();
-        this.setupFiltros();
-        this.initTheme();
-        this.render();
-    }
+const LOGIN_URL = '../../auth/login/index.html';
+const DASHBOARD_URL = '../../auth/dashboard/paginainicial/index.html';
 
-    setupDropdown() {
-        const themeToggle = document.getElementById('theme-toggle');
-        const userDropdown = document.getElementById('user-dropdown');
-        const userBtn = document.getElementById('user-btn');
-        const perfilBtn = document.getElementById('perfil-btn');
-        const configBtn = document.getElementById('config-btn');
-        const sairBtn = document.getElementById('sair-btn');
-        const logoutBtn = document.getElementById('logout-btn');
-
-        if (themeToggle) themeToggle.addEventListener('click', () => this.toggleTheme());
-        if (userBtn && userDropdown) {
-            userBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                userDropdown.classList.toggle('active');
-            });
-            document.addEventListener('click', (e) => {
-                if (!userDropdown.contains(e.target)) userDropdown.classList.remove('active');
-            });
-        }
-        if (perfilBtn) perfilBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.showToast('Funcionalidade de Perfil em desenvolvimento', 'info');
-        });
-        if (configBtn) configBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.showToast('Funcionalidade de Configuracoes em desenvolvimento', 'info');
-        });
-        if (sairBtn) sairBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (confirm('Deseja sair do sistema?')) window.location.href = '../tela2entrar/index.html';
-        });
-        if (logoutBtn) logoutBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (confirm('Deseja realmente sair do sistema?')) window.location.href = '../tela2entrar/index.html';
-        });
-    }
-
-    setupModal() {
-        const modal = document.getElementById('modal-movimento');
-        const form = document.getElementById('movimento-form');
-        const close = document.getElementById('close-movimento');
-        const cancelar = document.getElementById('btn-cancelar-movimento');
-
-        if (close) close.addEventListener('click', () => this.fecharModal());
-        if (cancelar) cancelar.addEventListener('click', () => this.fecharModal());
-        if (modal) modal.addEventListener('click', (e) => {
-            if (e.target === modal) this.fecharModal();
-        });
-        if (form) form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.salvarMovimento();
-        });
-    }
-
-    setupBotoes() {
-        const btnVoltar = document.getElementById('btn-voltar-dashboard-estoque');
-        const btnAdicionar = document.getElementById('btn-adicionar-movimento');
-        const btnBuscar = document.getElementById('btn-buscar-estoque');
-        const btnLimpar = document.getElementById('btn-limpar-estoque');
-        const btnFiltroAvancado = document.getElementById('btn-filtro-avancado-estoque');
-
-        if (btnVoltar) btnVoltar.addEventListener('click', () => {
-            window.location.href = '../tela1/paginainicial/index.html';
-        });
-        if (btnAdicionar) btnAdicionar.addEventListener('click', () => this.abrirModal());
-        if (btnBuscar) btnBuscar.addEventListener('click', () => {
-            this.aplicarFiltros();
-            this.showToast('Filtros aplicados!', 'info');
-        });
-        if (btnLimpar) btnLimpar.addEventListener('click', () => this.limparFiltros());
-        if (btnFiltroAvancado) btnFiltroAvancado.addEventListener('click', () => {
-            this.showToast('Filtro avancado em desenvolvimento', 'info');
-        });
-    }
-
-    setupFiltros() {
-        const nomeInput = document.getElementById('filtro-item');
-        const tipoSelect = document.getElementById('filtro-tipo');
-        if (nomeInput) nomeInput.addEventListener('input', () => this.aplicarFiltros());
-        if (tipoSelect) tipoSelect.addEventListener('change', () => this.aplicarFiltros());
-    }
-
-    abrirModal(movimento = null) {
-        const modal = document.getElementById('modal-movimento');
-        const title = document.getElementById('modal-movimento-title');
-        const form = document.getElementById('movimento-form');
-        this.movimentoEditando = movimento;
-
-        if (movimento) {
-            title.textContent = 'Editar Movimento';
-            document.getElementById('item').value = movimento.item;
-            document.getElementById('tipo').value = movimento.tipo;
-            document.getElementById('quantidade').value = movimento.quantidade;
-            document.getElementById('observacao').value = movimento.observacao || '';
-        } else {
-            title.textContent = 'Adicionar Movimento';
-            form.reset();
-        }
-        modal.classList.add('active');
-    }
-
-    fecharModal() {
-        document.getElementById('modal-movimento').classList.remove('active');
-        this.movimentoEditando = null;
-    }
-
-    salvarMovimento() {
-        const item = document.getElementById('item').value.trim();
-        const tipo = document.getElementById('tipo').value;
-        const quantidade = parseInt(document.getElementById('quantidade').value, 10);
-        const observacao = document.getElementById('observacao').value.trim();
-
-        if (!item || !tipo || !Number.isInteger(quantidade) || quantidade <= 0) {
-            this.showToast('Preencha os campos corretamente.', 'warning');
-            return;
-        }
-
-        const agora = new Date().toISOString();
-        if (this.movimentoEditando) {
-            const idx = this.movimentos.findIndex((m) => m.id === this.movimentoEditando.id);
-            this.movimentos[idx] = { ...this.movimentoEditando, item, tipo, quantidade, observacao };
-            this.showToast('Movimento atualizado com sucesso!', 'success');
-        } else {
-            this.movimentos.push({ id: crypto.randomUUID(), item, tipo, quantidade, observacao, data: agora });
-            this.showToast('Movimento adicionado com sucesso!', 'success');
-        }
-
-        this.persistir();
-        this.fecharModal();
-        this.render();
-    }
-
-    persistir() {
-        localStorage.setItem(this.storageKey, JSON.stringify(this.movimentos));
-    }
-
-    aplicarFiltros() {
-        const nome = (document.getElementById('filtro-item')?.value || '').toLowerCase();
-        const tipo = document.getElementById('filtro-tipo')?.value || '';
-        let filtrados = [...this.movimentos];
-        if (nome) filtrados = filtrados.filter((m) => m.item.toLowerCase().includes(nome));
-        if (tipo) filtrados = filtrados.filter((m) => m.tipo === tipo);
-        this.renderMovimentos(filtrados);
-    }
-
-    limparFiltros() {
-        const nome = document.getElementById('filtro-item');
-        const tipo = document.getElementById('filtro-tipo');
-        if (nome) nome.value = '';
-        if (tipo) tipo.value = '';
-        this.render();
-        this.showToast('Filtros limpos!', 'info');
-    }
-
-    calcularSaldos() {
-        const saldos = {};
-        this.movimentos.forEach((mov) => {
-            if (!saldos[mov.item]) saldos[mov.item] = 0;
-            saldos[mov.item] += mov.tipo === 'entrada' ? mov.quantidade : -mov.quantidade;
-        });
-        return saldos;
-    }
-
-    renderSaldo() {
-        const saldoTabela = document.getElementById('saldo-tabela');
-        const saldoVazio = document.getElementById('saldo-vazio');
-        const saldoBody = document.getElementById('saldo-body');
-        const saldos = this.calcularSaldos();
-        const linhas = Object.entries(saldos).sort((a, b) => a[0].localeCompare(b[0]));
-
-        saldoBody.innerHTML = '';
-        if (linhas.length === 0) {
-            saldoTabela.classList.add('hidden');
-            saldoVazio.classList.remove('hidden');
-            return;
-        }
-
-        saldoTabela.classList.remove('hidden');
-        saldoVazio.classList.add('hidden');
-        linhas.forEach(([item, saldo]) => {
-            const row = document.createElement('tr');
-            const cItem = document.createElement('td');
-            const cSaldo = document.createElement('td');
-            cItem.textContent = item;
-            cSaldo.textContent = String(saldo);
-            cSaldo.className = saldo >= 0 ? 'saldo-positivo' : 'saldo-negativo';
-            row.appendChild(cItem);
-            row.appendChild(cSaldo);
-            saldoBody.appendChild(row);
-        });
-    }
-
-    renderMovimentos(movimentos = null) {
-        const tbody = document.getElementById('movimentos-tbody');
-        const dados = movimentos || [...this.movimentos].sort((a, b) => new Date(b.data) - new Date(a.data));
-        tbody.innerHTML = '';
-
-        dados.forEach((mov) => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${new Date(mov.data).toLocaleString('pt-BR')}</td>
-                <td>${mov.item}</td>
-                <td><span class="badge ${mov.tipo}">${mov.tipo === 'entrada' ? 'Entrada' : 'Saida'}</span></td>
-                <td>${mov.quantidade}</td>
-                <td>${mov.observacao || '-'}</td>
-            `;
-            tbody.appendChild(row);
-        });
-    }
-
-    render() {
-        this.renderSaldo();
-        this.renderMovimentos();
-    }
-
-    initTheme() {
-        const savedTheme = localStorage.getItem('theme');
-        const body = document.body;
-        const themeIcon = document.querySelector('.theme-icon');
-        if (savedTheme === 'dark') {
-            body.setAttribute('data-theme', 'dark');
-            if (themeIcon) themeIcon.textContent = '◑';
-        } else {
-            body.removeAttribute('data-theme');
-            if (themeIcon) themeIcon.textContent = '◐';
-        }
-    }
-
-    toggleTheme() {
-        const body = document.body;
-        const themeIcon = document.querySelector('.theme-icon');
-        if (body.getAttribute('data-theme') === 'dark') {
-            body.removeAttribute('data-theme');
-            if (themeIcon) themeIcon.textContent = '◐';
-            localStorage.setItem('theme', 'light');
-        } else {
-            body.setAttribute('data-theme', 'dark');
-            if (themeIcon) themeIcon.textContent = '◑';
-            localStorage.setItem('theme', 'dark');
-        }
-    }
-
-    showToast(message, type = 'info') {
-        let container = document.querySelector('.toast-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.className = 'toast-container';
-            document.body.appendChild(container);
-        }
-        const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.innerHTML = `<div>${icons[type] || icons.info}</div><div>${message}</div><button class="toast-close">&times;</button>`;
-        container.appendChild(toast);
-        toast.querySelector('.toast-close').addEventListener('click', () => toast.remove());
-        setTimeout(() => toast.remove(), 4000);
-    }
+if (!isAuthenticated()) {
+  window.location.replace(LOGIN_URL);
+  throw new Error('Sessão não encontrada');
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    window.controleEstoque = new ControleEstoqueManager();
-});
+const sessao = getSession();
+let movimentacoesCache = [];
+let itensCache = [];
+
+const tbody = document.getElementById('movimentos-tbody');
+const saldoBody = document.getElementById('saldo-body');
+const saldoVazio = document.getElementById('saldo-vazio');
+const saldoTabela = document.getElementById('saldo-tabela');
+const modal = document.getElementById('modal-movimento');
+const form = document.getElementById('movimento-form');
+const itemSelect = document.getElementById('item-select');
+const tipoSelect = document.getElementById('tipo');
+const quantidadeInput = document.getElementById('quantidade');
+const observacaoInput = document.getElementById('observacao');
+const filtroItem = document.getElementById('filtro-item');
+const filtroTipo = document.getElementById('filtro-tipo');
+const greeting = document.getElementById('user-greeting');
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function formatarDataHora(valor) {
+  if (!valor) return '—';
+  const date = new Date(valor);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleString('pt-BR');
+}
+
+function labelTipo(tipo) {
+  const t = String(tipo || '').toUpperCase();
+  if (t === 'ENTRADA') return 'Entrada';
+  if (t === 'SAIDA') return 'Saída';
+  return tipo || '—';
+}
+
+function movimentacoesFiltradas() {
+  const nome = (filtroItem?.value || '').trim().toLowerCase();
+  const tipo = (filtroTipo?.value || '').trim().toUpperCase();
+
+  return movimentacoesCache.filter((mov) => {
+    const okNome = !nome || String(mov.nome_item || '').toLowerCase().includes(nome);
+    const okTipo = !tipo || String(mov.tipo_movimentacao || '').toUpperCase() === tipo;
+    return okNome && okTipo;
+  });
+}
+
+function renderizarSaldo() {
+  if (!saldoBody || !saldoTabela || !saldoVazio) return;
+
+  if (!itensCache.length) {
+    saldoVazio.classList.remove('hidden');
+    saldoVazio.textContent = 'Nenhum item registrado.';
+    saldoTabela.classList.add('hidden');
+    saldoBody.innerHTML = '';
+    return;
+  }
+
+  saldoVazio.classList.add('hidden');
+  saldoTabela.classList.remove('hidden');
+  saldoBody.innerHTML = itensCache
+    .map(
+      (item) => `
+      <tr>
+        <td>${escapeHtml(item.nome)}</td>
+        <td>${escapeHtml(item.unidade || 'UN')}</td>
+        <td>${escapeHtml(item.quantidade ?? 0)}</td>
+        <td>${escapeHtml(item.nome_local || '—')}</td>
+      </tr>
+    `
+    )
+    .join('');
+}
+
+function renderizarHistorico(lista = movimentacoesFiltradas()) {
+  if (!tbody) return;
+
+  if (!lista.length) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" style="text-align:center;padding:1.5rem;color:#6b7280;">
+          Nenhuma movimentação encontrada.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = lista
+    .map((mov) => {
+      const tipo = String(mov.tipo_movimentacao || '').toUpperCase();
+      const tipoClass = tipo === 'ENTRADA' ? 'entrada' : 'saida';
+      return `
+        <tr>
+          <td>${escapeHtml(formatarDataHora(mov.data_movimentacao))}</td>
+          <td>${escapeHtml(mov.nome_item || '—')}</td>
+          <td><span class="tipo-badge ${tipoClass}">${escapeHtml(labelTipo(tipo))}</span></td>
+          <td>${escapeHtml(mov.quantidade)}</td>
+          <td>${escapeHtml(mov.observacao || '—')}</td>
+        </tr>
+      `;
+    })
+    .join('');
+}
+
+async function carregarOpcoesItens() {
+  if (!itemSelect) return;
+
+  try {
+    const itens = await api.get('/itens/');
+    itensCache = Array.isArray(itens) ? itens : [];
+
+    itemSelect.innerHTML = '<option value="">Selecione um item</option>';
+    itensCache.forEach((item) => {
+      const option = document.createElement('option');
+      option.value = String(item.id_item);
+      option.textContent = `${item.nome} (Estoque: ${item.quantidade ?? 0})`;
+      itemSelect.appendChild(option);
+    });
+
+    renderizarSaldo();
+
+    if (!itensCache.length) {
+      showNotification('Cadastre itens antes de registrar movimentações.', 'warning');
+    }
+  } catch (error) {
+    showNotification(error.message || 'Não foi possível carregar os itens.', 'error');
+  }
+}
+
+async function carregarMovimentacoes() {
+  try {
+    const data = await api.get('/movimentacoes/');
+    movimentacoesCache = Array.isArray(data) ? data : [];
+    renderizarHistorico();
+  } catch (error) {
+    showNotification(error.message || 'Não foi possível carregar o histórico.', 'error');
+    movimentacoesCache = [];
+    renderizarHistorico([]);
+  }
+}
+
+function abrirModal() {
+  form?.reset();
+  modal?.classList.add('active');
+  itemSelect?.focus();
+}
+
+function fecharModal() {
+  modal?.classList.remove('active');
+  form?.reset();
+}
+
+async function salvarMovimentacao(event) {
+  event.preventDefault();
+
+  const idItem = Number(itemSelect?.value || 0);
+  const tipo = (tipoSelect?.value || '').trim();
+  const quantidade = Number(quantidadeInput?.value || 0);
+  const observacao = (observacaoInput?.value || '').trim();
+
+  if (!idItem) {
+    showNotification('Selecione um item.', 'warning');
+    return;
+  }
+  if (!tipo) {
+    showNotification('Selecione o tipo de movimentação.', 'warning');
+    return;
+  }
+  if (!quantidade || quantidade < 1) {
+    showNotification('Informe uma quantidade válida (>= 1).', 'warning');
+    return;
+  }
+
+  const payload = {
+    id_item: idItem,
+    tipo_movimentacao: tipo,
+    quantidade,
+    observacao: observacao || null,
+    usuario_id: sessao?.id_usuario || null,
+  };
+
+  try {
+    const result = await api.post('/movimentacoes/', payload);
+    const qtdAtual = result?.quantidade_atual;
+    const msg =
+      qtdAtual != null
+        ? `Movimentação registrada! Estoque atual: ${qtdAtual}.`
+        : 'Movimentação registrada com sucesso!';
+    showNotification(msg, 'success');
+    fecharModal();
+    await Promise.all([carregarMovimentacoes(), carregarOpcoesItens()]);
+  } catch (error) {
+    showNotification(error.message || 'Não foi possível registrar a movimentação.', 'error');
+  }
+}
+
+function initTheme() {
+  const savedTheme = localStorage.getItem('theme');
+  const html = document.documentElement;
+  const body = document.body;
+  const themeIcon = document.querySelector('.theme-icon');
+
+  if (savedTheme === 'dark') {
+    body.setAttribute('data-theme', 'dark');
+    html.setAttribute('data-theme', 'dark');
+    if (themeIcon) themeIcon.textContent = '◑';
+  } else {
+    body.removeAttribute('data-theme');
+    html.removeAttribute('data-theme');
+    if (themeIcon) themeIcon.textContent = '◐';
+  }
+}
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const body = document.body;
+  const themeIcon = document.querySelector('.theme-icon');
+
+  if (body.getAttribute('data-theme') === 'dark') {
+    body.removeAttribute('data-theme');
+    html.removeAttribute('data-theme');
+    if (themeIcon) themeIcon.textContent = '◐';
+    localStorage.setItem('theme', 'light');
+  } else {
+    body.setAttribute('data-theme', 'dark');
+    html.setAttribute('data-theme', 'dark');
+    if (themeIcon) themeIcon.textContent = '◑';
+    localStorage.setItem('theme', 'dark');
+  }
+}
+
+function setupEventListeners() {
+  if (greeting && sessao?.nome) {
+    greeting.textContent = `Olá, ${sessao.nome}`;
+  }
+
+  document.getElementById('btn-adicionar-movimento')?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    await carregarOpcoesItens();
+    abrirModal();
+  });
+
+  document.getElementById('btn-voltar-dashboard-estoque')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.location.href = DASHBOARD_URL;
+  });
+
+  document.getElementById('btn-cancelar-movimento')?.addEventListener('click', fecharModal);
+  document.getElementById('close-movimento')?.addEventListener('click', fecharModal);
+
+  modal?.addEventListener('click', (e) => {
+    if (e.target === modal) fecharModal();
+  });
+
+  form?.addEventListener('submit', salvarMovimentacao);
+
+  document.getElementById('btn-buscar-estoque')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    renderizarHistorico();
+  });
+
+  document.getElementById('btn-limpar-estoque')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (filtroItem) filtroItem.value = '';
+    if (filtroTipo) filtroTipo.value = '';
+    renderizarHistorico();
+  });
+
+  document.getElementById('theme-toggle')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    toggleTheme();
+  });
+
+  const userDropdown = document.getElementById('user-dropdown');
+  const userBtn = document.getElementById('user-btn');
+
+  userBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    userDropdown?.classList.toggle('active');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (userDropdown && !userDropdown.contains(e.target)) {
+      userDropdown.classList.remove('active');
+    }
+  });
+
+  const logout = (e) => {
+    e.preventDefault();
+    showConfirmModal('Sair do sistema', 'Deseja realmente sair?', () => {
+      clearSession();
+      window.location.href = LOGIN_URL;
+    }, { confirmText: 'Sair', cancelText: 'Cancelar', danger: true });
+  };
+
+  document.getElementById('logout-btn')?.addEventListener('click', logout);
+  document.getElementById('sair-btn')?.addEventListener('click', logout);
+}
+
+setupEventListeners();
+initTheme();
+Promise.all([carregarOpcoesItens(), carregarMovimentacoes()]);
+
+export { carregarMovimentacoes, carregarOpcoesItens };

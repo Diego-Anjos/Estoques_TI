@@ -4,12 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema Controle de Estoque</title>
+    <script src="../../../../shared/js/theme-boot.js"></script>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../../../../shared/css/responsive.css">
+    <link rel="stylesheet" href="../../../../shared/css/notify.css">
+    <link rel="stylesheet" href="../../../../shared/css/confirmModal.css">
 </head>
 <body>
+    <aside id="app-sidebar" class="app-sidebar" aria-label="Menu principal">
+        <div class="app-sidebar-brand">Controle de Estoque</div>
+        <nav class="app-sidebar-nav">
+            <a href="#dashboard" data-module="dashboard" class="active">Dashboard</a>
+            <a href="#usuarios" data-module="usuarios">Gestão de Usuários</a>
+            <a href="../../../inventory/locations/index.html" data-module="locais">Controle de Locais</a>
+            <a href="../../../inventory/item-types/index.html" data-module="tipos-item">Tipos de Item</a>
+            <a href="../../../inventory/items/index.html" data-module="itens">Cadastro de Itens</a>
+            <a href="../../../inventory/stock-control/index.html" data-module="estoque">Controle de Estoque</a>
+            <a href="../../../profile/index.html" data-module="perfil">Meu Perfil</a>
+        </nav>
+    </aside>
+
     <header class="header">
         <div class="header-content">
             <div class="left-section">
+                <button type="button" class="menu-toggle" id="menu-toggle" aria-label="Abrir menu" aria-expanded="false" aria-controls="app-sidebar">
+                    <span class="menu-toggle-bars" aria-hidden="true">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                </button>
                 <span class="greeting" id="user-greeting">Olá</span>
             </div>
             <div class="center-section">
@@ -47,7 +71,7 @@
                             </span>
                             Perfil
                         </a>
-                        <a href="#" class="dropdown-item" id="config-btn">
+                        <a href="../../../settings/index.html" class="dropdown-item" id="config-btn">
                             <span class="item-icon">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" stroke="currentColor" stroke-width="2"/>
@@ -210,19 +234,6 @@
                         <p>Monitore saldos, analise movimentações e mantenha controle total sobre seus níveis de estoque em tempo real.</p>
                     </div>
                 </div>
-                
-                <div class="course-card" data-module="movimentacoes">
-                    <div class="course-icon red-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M7 17L17 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M7 7H17V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </div>
-                    <div class="course-content">
-                        <h3>Movimentações</h3>
-                        <p>Registre entradas, saídas e transferências entre locais com controle completo do histórico de movimentações.</p>
-                    </div>
-                </div>
             </div>
         </section>
 
@@ -294,21 +305,15 @@
                 <!-- Header da tabela -->
                 <div class="table-header">
                     <div class="table-header-content">
-                        <div class="table-pagination-top">
-                            <div class="pagination-controls">
-                                <button class="pagination-btn">«</button>
-                                <button class="pagination-btn">‹</button>
-                                <button class="pagination-btn active">1</button>
-                                <button class="pagination-btn">›</button>
-                                <button class="pagination-btn">»</button>
-                            </div>
+                        <div class="table-pagination-top" id="usuarios-pagination-top">
+                            <div class="pagination-controls" data-pagination="usuarios"></div>
                             <div class="page-controls">
                                 <span>Ir para:</span>
-                                <input type="number" class="page-input" value="1" min="1">
+                                <input type="number" class="page-input" id="usuarios-page-input" value="1" min="1">
                             </div>
                             <div class="items-per-page">
                                 <span>Itens por página:</span>
-                                <select class="items-select">
+                                <select class="items-select" id="usuarios-items-select">
                                     <option value="10" selected>10</option>
                                     <option value="25">25</option>
                                     <option value="50">50</option>
@@ -343,21 +348,15 @@
                 <!-- Footer da tabela -->
                 <div class="table-footer">
                     <div class="table-footer-content">
-                        <div class="table-pagination-bottom">
-                            <div class="pagination-controls">
-                                <button class="pagination-btn">«</button>
-                                <button class="pagination-btn">‹</button>
-                                <button class="pagination-btn active">1</button>
-                                <button class="pagination-btn">›</button>
-                                <button class="pagination-btn">»</button>
-                            </div>
+                        <div class="table-pagination-bottom" id="usuarios-pagination-bottom">
+                            <div class="pagination-controls" data-pagination="usuarios"></div>
                             <div class="page-controls">
                                 <span>Ir para:</span>
-                                <input type="number" class="page-input" value="1" min="1">
+                                <input type="number" class="page-input" id="usuarios-page-input-bottom" value="1" min="1">
                             </div>
                             <div class="items-per-page">
                                 <span>Itens por página:</span>
-                                <select class="items-select">
+                                <select class="items-select" id="usuarios-items-select-bottom">
                                     <option value="10" selected>10</option>
                                     <option value="25">25</option>
                                     <option value="50">50</option>
@@ -575,7 +574,7 @@
                 </div>
                 <div class="form-group">
                     <label for="senha">Senha:</label>
-                    <input type="password" id="senha" name="senha" required>
+                    <input type="password" id="senha" name="senha" minlength="6" placeholder="Mínimo 6 caracteres">
                 </div>
                 <div class="form-group">
                     <label for="ativo">Status:</label>
@@ -600,8 +599,8 @@
                 <h3>Confirmar Exclusão</h3>
             </div>
             <div class="modal-body-confirmacao">
-                <p>Tem certeza que deseja excluir este usuário?</p>
-                <p class="warning-text">Esta ação não poderá ser desfeita.</p>
+                <p>Tem certeza que deseja inativar este usuário?</p>
+                <p class="warning-text">O usuário será marcado como inativo (soft delete).</p>
             </div>
             <div class="form-actions-confirmacao">
                 <button type="button" class="btn-warning-improved" id="btn-cancelar-exclusao">

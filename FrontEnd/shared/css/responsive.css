@@ -1,0 +1,202 @@
+/**
+ * Estilos compartilhados: sidebar mobile, touch targets e scroll de tabelas.
+ * Inclua após o CSS da página.
+ */
+
+/* ---- Touch targets (mín. 44px) ---- */
+.touch-target,
+.menu-toggle,
+.theme-toggle,
+.logout-btn,
+.user-btn,
+.back-header-link {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+select,
+textarea,
+.btn-primary,
+.btn-secondary,
+.btn-loading,
+.btn-clear,
+.btn-add-user,
+.btn-add-local,
+button#btn-entrar,
+button#btn-salvar {
+  min-height: 44px;
+}
+
+/* ---- Tabelas com scroll horizontal ---- */
+.table-scroll,
+.users-table-container,
+.locais-table-container,
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-scroll table,
+.users-table-container table,
+.locais-table-container table,
+.table-responsive table {
+  min-width: 640px;
+}
+
+/* ---- Sidebar / hamburger ---- */
+.menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 0.35rem;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.menu-toggle:hover,
+.menu-toggle:focus-visible {
+  background: rgba(255, 255, 255, 0.12);
+  outline: none;
+}
+
+.menu-toggle-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 20px;
+}
+
+.menu-toggle-bars span {
+  display: block;
+  height: 2px;
+  width: 100%;
+  background: currentColor;
+  border-radius: 2px;
+  transition: transform 0.25s ease, opacity 0.2s ease;
+}
+
+.menu-toggle.is-active .menu-toggle-bars span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.menu-toggle.is-active .menu-toggle-bars span:nth-child(2) {
+  opacity: 0;
+}
+
+.menu-toggle.is-active .menu-toggle-bars span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+.app-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 200;
+  width: 280px;
+  max-width: 85vw;
+  height: 100vh;
+  background: #111827;
+  color: #f9fafb;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
+  transform: translateX(-100%);
+  transition: transform 0.28s ease;
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem 0;
+}
+
+.app-sidebar.sidebar-open {
+  transform: translateX(0);
+}
+
+.app-sidebar-brand {
+  padding: 0.75rem 1.25rem 1.25rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 0.75rem;
+}
+
+.app-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0 0.75rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.app-sidebar-nav a {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 44px;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  color: rgba(249, 250, 251, 0.85);
+  text-decoration: none;
+  font-size: 0.925rem;
+  font-weight: 500;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.app-sidebar-nav a:hover,
+.app-sidebar-nav a.active {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 190;
+  background: rgba(15, 23, 42, 0.55);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.sidebar-overlay.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+body.has-sidebar-open {
+  overflow: hidden;
+}
+
+/* Desktop / tablet largo: sidebar fora do fluxo mobile (oculta por padrão no layout atual;
+   no mobile o hamburger controla a abertura) */
+@media (min-width: 768px) {
+  .menu-toggle {
+    display: none !important;
+  }
+
+  .app-sidebar {
+    display: none;
+  }
+
+  .sidebar-overlay {
+    display: none !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .menu-toggle {
+    display: inline-flex;
+  }
+}

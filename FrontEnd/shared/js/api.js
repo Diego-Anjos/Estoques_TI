@@ -65,4 +65,45 @@ export const api = {
   delete: (path, options) => apiRequest(path, { ...options, method: 'DELETE' }),
 };
 
+/**
+ * Baixa um arquivo binário/texto da API (ex.: CSV).
+ * @param {string} path
+ * @param {string} [fallbackFilename]
+ */
+export async function apiDownload(path, fallbackFilename = 'download.csv') {
+  const headers = new Headers();
+  const token = localStorage.getItem('token');
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+
+  const url = `${API_URL}/${String(path).replace(/^\//, '')}`;
+  const response = await fetch(url, { method: 'GET', headers });
+
+  if (!response.ok) {
+    let detail = response.statusText;
+    try {
+      const payload = await response.json();
+      detail = payload.detail || payload.message || detail;
+      if (Array.isArray(detail)) {
+        detail = detail.map((i) => i.msg || String(i)).join('\n');
+      }
+    } catch {
+      /* ignore */
+    }
+    throw new Error(typeof detail === 'string' ? detail : 'Falha no download');
+  }
+
+  const disposition = response.headers.get('Content-Disposition') || '';
+  const match = /filename="?([^"]+)"?/i.exec(disposition);
+  const filename = match?.[1] || fallbackFilename;
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = objectUrl;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(objectUrl);
+}
+
 export { API_URL };

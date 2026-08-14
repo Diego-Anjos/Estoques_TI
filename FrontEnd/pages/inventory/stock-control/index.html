@@ -4,16 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Estoque - Sistema Controle de Estoque</title>
+    <script src="../../../shared/js/theme-boot.js"></script>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../../../shared/css/responsive.css">
+    <link rel="stylesheet" href="../../../shared/css/notify.css">
+    <link rel="stylesheet" href="../../../shared/css/confirmModal.css">
 </head>
 <body>
     <header class="header">
         <div class="header-content">
             <div class="left-section">
-                <span class="greeting">Ola, Maria</span>
+                <span class="greeting" id="user-greeting">Olá</span>
             </div>
             <div class="center-section">
                 <nav class="breadcrumb">
+                    <a href="../../auth/dashboard/paginainicial/index.html" class="breadcrumb-item">Dashboard</a>
+                    <span class="breadcrumb-sep">/</span>
                     <span class="breadcrumb-item active">Controle de Estoque</span>
                 </nav>
             </div>
@@ -38,9 +44,8 @@
                         </span>
                     </button>
                     <div class="dropdown-content">
-                        <a href="#" class="dropdown-item" id="perfil-btn"><span class="item-icon">👤</span>Perfil</a>
-                        <a href="#" class="dropdown-item" id="config-btn"><span class="item-icon">⚙️</span>Configuracoes</a>
-                        <a href="#" class="dropdown-item" id="sair-btn"><span class="item-icon">🚪</span>Sair</a>
+                        <a href="../../profile/index.html" class="dropdown-item" id="perfil-btn">Perfil</a>
+                        <a href="#" class="dropdown-item" id="sair-btn">Sair</a>
                     </div>
                 </div>
             </div>
@@ -49,7 +54,7 @@
 
     <main class="main-content">
         <div class="filters-header">
-            <h2 class="page-title">Movimentacoes de Estoque</h2>
+            <h2 class="page-title">Movimentações de Estoque</h2>
             <div class="header-buttons">
                 <button class="btn-export-estoque" id="btn-voltar-dashboard-estoque" title="Voltar ao Dashboard">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -75,17 +80,14 @@
                     <label>Tipo:</label>
                     <select class="filter-select-new" id="filtro-tipo">
                         <option value="">Todos</option>
-                        <option value="entrada">Entrada</option>
-                        <option value="saida">Saida</option>
+                        <option value="ENTRADA">Entrada</option>
+                        <option value="SAIDA">Saída</option>
                     </select>
                 </div>
                 <div class="filter-actions">
-                    <button class="btn-loading" id="btn-buscar-estoque">Buscar</button>
-                    <button class="btn-clear" id="btn-limpar-estoque">Limpar</button>
+                    <button class="btn-loading" id="btn-buscar-estoque" type="button">Buscar</button>
+                    <button class="btn-clear" id="btn-limpar-estoque" type="button">Limpar</button>
                 </div>
-            </div>
-            <div class="advanced-filter">
-                <button class="btn-advanced-filter" id="btn-filtro-avancado-estoque">Filtro avancado</button>
             </div>
         </div>
 
@@ -97,7 +99,9 @@
                     <thead>
                         <tr>
                             <th>Item</th>
+                            <th>Unidade</th>
                             <th>Saldo atual</th>
+                            <th>Local</th>
                         </tr>
                     </thead>
                     <tbody id="saldo-body"></tbody>
@@ -112,10 +116,12 @@
                             <th>Item</th>
                             <th>Tipo</th>
                             <th>Quantidade</th>
-                            <th>Observacao</th>
+                            <th>Observação</th>
                         </tr>
                     </thead>
-                    <tbody id="movimentos-tbody"></tbody>
+                    <tbody id="movimentos-tbody">
+                        <!-- Movimentações via JavaScript -->
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -129,24 +135,26 @@
             </div>
             <form id="movimento-form" class="item-form">
                 <div class="form-group">
-                    <label for="item">Nome do Item:</label>
-                    <input type="text" id="item" required maxlength="80">
+                    <label for="item-select">Item:</label>
+                    <select id="item-select" name="item-select" required>
+                        <option value="">Selecione um item</option>
+                    </select>
                 </div>
                 <div class="form-group">
-                    <label for="tipo">Tipo:</label>
-                    <select id="tipo" required>
+                    <label for="tipo">Tipo de Movimentação:</label>
+                    <select id="tipo" name="tipo" required>
                         <option value="">Selecione</option>
-                        <option value="entrada">Entrada</option>
-                        <option value="saida">Saida</option>
+                        <option value="Entrada">Entrada</option>
+                        <option value="Saída">Saída</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="quantidade">Quantidade:</label>
-                    <input type="number" id="quantidade" min="1" required>
+                    <input type="number" id="quantidade" name="quantidade" min="1" required>
                 </div>
                 <div class="form-group">
-                    <label for="observacao">Observacao:</label>
-                    <textarea id="observacao" rows="3"></textarea>
+                    <label for="observacao">Observação:</label>
+                    <textarea id="observacao" name="observacao" rows="3" maxlength="300" placeholder="Motivo ou detalhes da movimentação"></textarea>
                 </div>
                 <div class="form-actions">
                     <button type="button" class="btn-secondary" id="btn-cancelar-movimento">Cancelar</button>
@@ -156,6 +164,6 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
 </body>
 </html>

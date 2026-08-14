@@ -689,6 +689,10 @@ body {
     color: white;
 }
 
+.setor-col {
+    min-width: 100px;
+}
+
 /* MODAL STYLES */
 .modal {
     display: none;

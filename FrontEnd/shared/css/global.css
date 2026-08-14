@@ -206,6 +206,19 @@ a:hover {
   background: var(--gray-500);
 }
 
+/* Tabelas responsivas (scroll horizontal) */
+.table-scroll,
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-scroll table,
+.table-responsive table {
+  min-width: 640px;
+}
+
 /* Responsividade básica */
 @media (max-width: 768px) {
   .container {

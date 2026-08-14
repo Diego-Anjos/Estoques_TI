@@ -94,42 +94,101 @@ class UsuarioRepository:
             return None
     
     @staticmethod
-    def listar_todos(apenas_ativos: bool = True) -> List[Dict[str, Any]]:
-        """Lista todos os usuários"""
-        if apenas_ativos:
-            sql = f"""
-                SELECT ID_USUARIO, NOME, EMAIL, CARGO, ATIVO,
-                       DATA_CRIACAO, CRIADO_POR, DATA_ALTERACAO, ALTERADO_POR
-                FROM {TABLE_NAME}
-                WHERE ATIVO = 'S'
-                ORDER BY NOME
-            """
-        else:
-            sql = f"""
-                SELECT ID_USUARIO, NOME, EMAIL, CARGO, ATIVO,
-                       DATA_CRIACAO, CRIADO_POR, DATA_ALTERACAO, ALTERADO_POR
-                FROM {TABLE_NAME}
-                ORDER BY NOME
-            """
-        
+    def listar(
+        nome: Optional[str] = None,
+        email: Optional[str] = None,
+        skip: int = 0,
+        limit: Optional[int] = None,
+        apenas_ativos: Optional[bool] = None,
+    ) -> List[Dict[str, Any]]:
+        """Lista usuários com filtros opcionais e paginação (skip/limit)."""
+        where = []
+        params: Dict[str, Any] = {}
+
+        if apenas_ativos is True:
+            where.append("ATIVO = 'S'")
+        elif apenas_ativos is False:
+            where.append("ATIVO = 'N'")
+
+        if nome:
+            where.append("UPPER(NOME) LIKE UPPER(:nome)")
+            params["nome"] = f"%{nome.strip()}%"
+
+        if email:
+            where.append("UPPER(EMAIL) LIKE UPPER(:email)")
+            params["email"] = f"%{email.strip()}%"
+
+        where_sql = f"WHERE {' AND '.join(where)}" if where else ""
+
+        # Oracle: paginação via OFFSET/FETCH (12c+)
+        pagination_sql = ""
+        if limit is not None:
+            pagination_sql = " OFFSET :skip ROWS FETCH NEXT :limit ROWS ONLY"
+            params["skip"] = max(0, int(skip))
+            params["limit"] = max(1, int(limit))
+
+        sql = f"""
+            SELECT ID_USUARIO, NOME, EMAIL, CARGO, ATIVO,
+                   DATA_CRIACAO, CRIADO_POR, DATA_ALTERACAO, ALTERADO_POR
+            FROM {TABLE_NAME}
+            {where_sql}
+            ORDER BY NOME
+            {pagination_sql}
+        """
+
         with get_cursor() as cursor:
-            cursor.execute(sql)
+            cursor.execute(sql, params)
             rows = cursor.fetchall()
-            
+
             return [
                 {
-                    'id_usuario': row[0],
-                    'nome': row[1],
-                    'email': row[2],
-                    'cargo': row[3],
-                    'ativo': row[4],
-                    'data_criacao': row[5],
-                    'criado_por': row[6],
-                    'data_alteracao': row[7],
-                    'alterado_por': row[8]
+                    "id_usuario": row[0],
+                    "nome": row[1],
+                    "email": row[2],
+                    "cargo": row[3],
+                    "ativo": row[4],
+                    "data_criacao": row[5],
+                    "criado_por": row[6],
+                    "data_alteracao": row[7],
+                    "alterado_por": row[8],
                 }
                 for row in rows
             ]
+
+    @staticmethod
+    def contar(
+        nome: Optional[str] = None,
+        email: Optional[str] = None,
+        apenas_ativos: Optional[bool] = None,
+    ) -> int:
+        """Conta usuários com os mesmos filtros de listar."""
+        where = []
+        params: Dict[str, Any] = {}
+
+        if apenas_ativos is True:
+            where.append("ATIVO = 'S'")
+        elif apenas_ativos is False:
+            where.append("ATIVO = 'N'")
+
+        if nome:
+            where.append("UPPER(NOME) LIKE UPPER(:nome)")
+            params["nome"] = f"%{nome.strip()}%"
+
+        if email:
+            where.append("UPPER(EMAIL) LIKE UPPER(:email)")
+            params["email"] = f"%{email.strip()}%"
+
+        where_sql = f"WHERE {' AND '.join(where)}" if where else ""
+        sql = f"SELECT COUNT(*) FROM {TABLE_NAME} {where_sql}"
+
+        with get_cursor() as cursor:
+            cursor.execute(sql, params)
+            return int(cursor.fetchone()[0])
+
+    @staticmethod
+    def listar_todos(apenas_ativos: bool = True) -> List[Dict[str, Any]]:
+        """Lista todos os usuários (compatibilidade)."""
+        return UsuarioRepository.listar(apenas_ativos=True if apenas_ativos else None)
     
     @staticmethod
     def atualizar(usuario_id: int, dados: Dict[str, Any], alterado_por: Optional[int] = None) -> bool:

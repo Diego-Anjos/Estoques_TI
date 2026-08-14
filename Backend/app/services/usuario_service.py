@@ -48,9 +48,21 @@ class UsuarioService:
         return UsuarioResponse(**usuario)
     
     @staticmethod
-    def listar_usuarios() -> List[UsuarioResponse]:
-        """Lista todos os usuários"""
-        usuarios = UsuarioRepository.listar_todos()
+    def listar_usuarios(
+        nome: Optional[str] = None,
+        email: Optional[str] = None,
+        skip: int = 0,
+        limit: Optional[int] = None,
+        apenas_ativos: Optional[bool] = None,
+    ) -> List[UsuarioResponse]:
+        """Lista usuários com filtros e paginação opcionais."""
+        usuarios = UsuarioRepository.listar(
+            nome=nome,
+            email=email,
+            skip=skip,
+            limit=limit,
+            apenas_ativos=apenas_ativos,
+        )
         return [UsuarioResponse(**u) for u in usuarios]
     
     @staticmethod

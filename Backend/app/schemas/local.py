@@ -8,8 +8,10 @@ from datetime import datetime
 
 class LocalBase(BaseModel):
     """Schema base de local"""
-    nome: str = Field(..., min_length=3, max_length=120, description="Nome do local")
+    nome: str = Field(..., min_length=2, max_length=120, description="Nome do local (ex: Prédio A)")
+    setor: Optional[str] = Field(None, max_length=80, description="Setor (ex: TI, RH)")
     descricao: Optional[str] = Field(None, max_length=300, description="Descrição do local")
+    status: str = Field("Ativo", max_length=20, description="Status: Ativo ou Inativo")
 
 
 class LocalCreate(LocalBase):
@@ -19,8 +21,10 @@ class LocalCreate(LocalBase):
 
 class LocalUpdate(BaseModel):
     """Schema para atualização de local"""
-    nome: Optional[str] = Field(None, min_length=3, max_length=120)
+    nome: Optional[str] = Field(None, min_length=2, max_length=120)
+    setor: Optional[str] = Field(None, max_length=80)
     descricao: Optional[str] = Field(None, max_length=300)
+    status: Optional[str] = Field(None, max_length=20)
 
 
 class LocalResponse(LocalBase):
@@ -30,6 +34,6 @@ class LocalResponse(LocalBase):
     criado_por: Optional[int] = None
     data_alteracao: Optional[datetime] = None
     alterado_por: Optional[int] = None
-    
+
     class Config:
         from_attributes = True

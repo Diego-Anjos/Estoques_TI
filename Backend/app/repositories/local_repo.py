@@ -7,139 +7,131 @@ from app.core.database import get_cursor
 # Nome da tabela no banco Oracle
 TABLE_NAME = "ESTOQUES_TI_LOCAIS"
 
+_SELECT_COLS = """
+    ID_LOCAL, NOME, SETOR, DESCRICAO, STATUS,
+    DATA_CRIACAO, CRIADO_POR, DATA_ALTERACAO, ALTERADO_POR
+"""
+
+
+def _row_to_dict(row) -> Dict[str, Any]:
+    return {
+        'id_local': row[0],
+        'nome': row[1],
+        'setor': row[2],
+        'descricao': row[3],
+        'status': row[4] or 'Ativo',
+        'data_criacao': row[5],
+        'criado_por': row[6],
+        'data_alteracao': row[7],
+        'alterado_por': row[8],
+    }
+
 
 class LocalRepository:
     """Repository para gerenciar locais no banco de dados Oracle"""
-    
+
     @staticmethod
     def criar(dados: Dict[str, Any], usuario_id: Optional[int] = None) -> int:
         """Cria um novo local"""
         sql = f"""
-            INSERT INTO {TABLE_NAME} (NOME, DESCRICAO, CRIADO_POR)
-            VALUES (:nome, :descricao, :criado_por)
+            INSERT INTO {TABLE_NAME} (NOME, SETOR, DESCRICAO, STATUS, CRIADO_POR)
+            VALUES (:nome, :setor, :descricao, :status, :criado_por)
             RETURNING ID_LOCAL INTO :id
         """
-        
+
         with get_cursor() as cursor:
             id_var = cursor.var(int)
             cursor.execute(sql, {
                 'nome': dados['nome'],
+                'setor': dados.get('setor'),
                 'descricao': dados.get('descricao'),
+                'status': dados.get('status') or 'Ativo',
                 'criado_por': usuario_id,
-                'id': id_var
+                'id': id_var,
             })
             return id_var.getvalue()[0]
-    
+
     @staticmethod
     def buscar_por_id(local_id: int) -> Optional[Dict[str, Any]]:
         """Busca local por ID"""
         sql = f"""
-            SELECT ID_LOCAL, NOME, DESCRICAO,
-                   DATA_CRIACAO, CRIADO_POR, DATA_ALTERACAO, ALTERADO_POR
+            SELECT {_SELECT_COLS}
             FROM {TABLE_NAME}
             WHERE ID_LOCAL = :id
         """
-        
+
         with get_cursor() as cursor:
             cursor.execute(sql, {'id': local_id})
             row = cursor.fetchone()
-            
-            if row:
-                return {
-                    'id_local': row[0],
-                    'nome': row[1],
-                    'descricao': row[2],
-                    'data_criacao': row[3],
-                    'criado_por': row[4],
-                    'data_alteracao': row[5],
-                    'alterado_por': row[6]
-                }
-            return None
-    
+            return _row_to_dict(row) if row else None
+
     @staticmethod
     def buscar_por_nome(nome: str) -> Optional[Dict[str, Any]]:
         """Busca local por nome"""
         sql = f"""
-            SELECT ID_LOCAL, NOME, DESCRICAO,
-                   DATA_CRIACAO, CRIADO_POR, DATA_ALTERACAO, ALTERADO_POR
+            SELECT {_SELECT_COLS}
             FROM {TABLE_NAME}
             WHERE UPPER(NOME) = UPPER(:nome)
         """
-        
+
         with get_cursor() as cursor:
             cursor.execute(sql, {'nome': nome})
             row = cursor.fetchone()
-            
-            if row:
-                return {
-                    'id_local': row[0],
-                    'nome': row[1],
-                    'descricao': row[2],
-                    'data_criacao': row[3],
-                    'criado_por': row[4],
-                    'data_alteracao': row[5],
-                    'alterado_por': row[6]
-                }
-            return None
-    
+            return _row_to_dict(row) if row else None
+
     @staticmethod
     def listar_todos() -> List[Dict[str, Any]]:
         """Lista todos os locais"""
         sql = f"""
-            SELECT ID_LOCAL, NOME, DESCRICAO,
-                   DATA_CRIACAO, CRIADO_POR, DATA_ALTERACAO, ALTERADO_POR
+            SELECT {_SELECT_COLS}
             FROM {TABLE_NAME}
             ORDER BY NOME
         """
-        
+
         with get_cursor() as cursor:
             cursor.execute(sql)
             rows = cursor.fetchall()
-            
-            return [
-                {
-                    'id_local': row[0],
-                    'nome': row[1],
-                    'descricao': row[2],
-                    'data_criacao': row[3],
-                    'criado_por': row[4],
-                    'data_alteracao': row[5],
-                    'alterado_por': row[6]
-                }
-                for row in rows
-            ]
-    
+            return [_row_to_dict(row) for row in rows]
+
     @staticmethod
     def atualizar(local_id: int, dados: Dict[str, Any], alterado_por: Optional[int] = None) -> bool:
         """Atualiza um local"""
         campos = []
         params = {'id': local_id, 'alterado_por': alterado_por}
-        
+
         if 'nome' in dados:
             campos.append("NOME = :nome")
             params['nome'] = dados['nome']
-        
+
+        if 'setor' in dados:
+            campos.append("SETOR = :setor")
+            params['setor'] = dados['setor']
+
         if 'descricao' in dados:
             campos.append("DESCRICAO = :descricao")
             params['descricao'] = dados['descricao']
-        
+
+        if 'status' in dados:
+            campos.append("STATUS = :status")
+            params['status'] = dados['status']
+
         if not campos:
             return False
-        
+
         campos.append("DATA_ALTERACAO = SYSTIMESTAMP")
         campos.append("ALTERADO_POR = :alterado_por")
-        
+
         sql = f"UPDATE {TABLE_NAME} SET {', '.join(campos)} WHERE ID_LOCAL = :id"
-        
+
         with get_cursor() as cursor:
             cursor.execute(sql, params)
             return cursor.rowcount > 0
-    
+
     @staticmethod
     def deletar(local_id: int) -> bool:
         """Deleta um local"""
         sql = f"DELETE FROM {TABLE_NAME} WHERE ID_LOCAL = :id"
-        
+
         with get_cursor() as cursor:
             cursor.execute(sql, {'id': local_id})
             return cursor.rowcount > 0

@@ -13,6 +13,7 @@ from app.models.softwares import Software
 from app.models.software_licencas_pool import SoftwareLicencaPool
 from app.models.software_atribuicoes import SoftwareAtribuicao
 from app.models.ocorrencias import Ocorrencia
+from app.models.configuracao import ConfiguracaoSistema
 
 __all__ = [
     'Usuario',
@@ -26,5 +27,6 @@ __all__ = [
     'Software',
     'SoftwareLicencaPool',
     'SoftwareAtribuicao',
-    'Ocorrencia'
+    'Ocorrencia',
+    'ConfiguracaoSistema',
 ]

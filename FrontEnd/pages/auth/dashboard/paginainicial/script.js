@@ -1,6 +1,9 @@
 
 import { api } from '../../../../shared/js/api.js';
 import { getSession, isAuthenticated, clearSession } from '../../../../shared/js/auth.js';
+import { initSidebar } from '../../../../shared/js/sidebar.js';
+import { showNotification } from '../../../../shared/js/notify.js';
+import { showConfirmModal } from '../../../../shared/js/confirmModal.js';
 
 // Guarda de rota: sem sessão → login
 if (!isAuthenticated()) {
@@ -11,7 +14,10 @@ if (!isAuthenticated()) {
 class EstoqueManager {
     constructor() {
         this.produtos = JSON.parse(localStorage.getItem('produtos')) || [];
-        this.usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
+        this.usuarios = [];
+        this.usuariosFiltrados = [];
+        this.paginaUsuarios = 1;
+        this.itensPorPaginaUsuarios = 10;
         this.locais = JSON.parse(localStorage.getItem('locais')) || [];
         this.tipos = JSON.parse(localStorage.getItem('tipos')) || [];
         this.produtoEditando = null;
@@ -33,6 +39,7 @@ class EstoqueManager {
     init() {
         this.updateUserGreeting();
         this.setupModuleNavigation();
+        this.setupSidebarNav();
         this.setupBackButtons();
         this.setupDropdown();
         this.setupModal();
@@ -42,23 +49,19 @@ class EstoqueManager {
         this.setupModalConfirmacaoLocal();
         this.setupFilters();
         this.setupFiltrosUsuarios();
+        this.setupPaginacaoUsuarios();
         this.setupForm();
         this.setupFormUsuario();
         this.setupFormLocal();
         this.setupModalTipo();
         this.setupFormTipo();
         this.setupModalConfirmacaoTipo();
-        this.renderUsuarios();
 
-        // Limpar dados antigos e adicionar novos dados de exemplo
         localStorage.removeItem('usuarios');
-        this.usuarios = [];
-        this.adicionarUsuariosExemplo();
 
-        // Inicializar tema salvo
         this.initTheme();
+        initSidebar();
 
-        // Mostrar dashboard e carregar métricas reais da API
         this.showSection('dashboard');
         this.loadDashboardStats();
     }
@@ -126,27 +129,51 @@ class EstoqueManager {
         moduleCards.forEach(card => {
             card.addEventListener('click', () => {
                 const module = card.getAttribute('data-module');
-                if (module === 'usuarios') {
-                    this.showSection('usuarios');
-                    this.updateBreadcrumb('usuarios');
-                    this.renderUsuarios();
-                } else if (module === 'locais') {
-                    // Página dedicada de locais (também existe seção interna)
-                    window.location.href = '../../../inventory/locations/index.html';
-                } else if (module === 'tipos-item') {
-                    window.location.href = '../../../inventory/item-types/index.html';
-                } else if (module === 'itens') {
-                    window.location.href = '../../../inventory/items/index.html';
-                } else if (module === 'estoque') {
-                    window.location.href = '../../../inventory/stock-control/index.html';
-                } else if (module === 'movimentacoes') {
-                    this.showToast('Módulo de Movimentações em desenvolvimento', 'info');
-                } else {
-                    this.showSection(module);
-                    this.updateBreadcrumb(module);
-                }
+                this.navigateToModule(module);
             });
         });
+    }
+
+    setupSidebarNav() {
+        document.querySelectorAll('.app-sidebar-nav a[data-module]').forEach((link) => {
+            link.addEventListener('click', (e) => {
+                const module = link.getAttribute('data-module');
+                if (!module) return;
+
+                // Links externos (outras páginas) seguem o href normal
+                if (module === 'locais' || module === 'tipos-item' || module === 'itens' || module === 'estoque' || module === 'perfil') {
+                    return;
+                }
+
+                e.preventDefault();
+                this.navigateToModule(module);
+
+                document.querySelectorAll('.app-sidebar-nav a').forEach((a) => a.classList.remove('active'));
+                link.classList.add('active');
+            });
+        });
+    }
+
+    navigateToModule(module) {
+        if (module === 'usuarios') {
+            this.showSection('usuarios');
+            this.updateBreadcrumb('usuarios');
+            this.carregarUsuarios();
+        } else if (module === 'locais') {
+            window.location.href = '../../../inventory/locations/index.html';
+        } else if (module === 'tipos-item') {
+            window.location.href = '../../../inventory/item-types/index.html';
+        } else if (module === 'itens') {
+            window.location.href = '../../../inventory/items/index.html';
+        } else if (module === 'estoque') {
+            window.location.href = '../../../inventory/stock-control/index.html';
+        } else if (module === 'dashboard') {
+            this.showSection('dashboard');
+            this.updateBreadcrumb('dashboard');
+        } else {
+            this.showSection(module);
+            this.updateBreadcrumb(module);
+        }
     }
 
     setupBackButtons() {
@@ -173,7 +200,7 @@ class EstoqueManager {
 
         // Carregamento específico da seção
         if (sectionId === 'usuarios') {
-            this.renderUsuarios();
+            this.carregarUsuarios();
         }
     }
 
@@ -225,8 +252,7 @@ class EstoqueManager {
             'locais': 'Gestão de Locais',
             'tipos-item': 'Tipos de Item',
             'itens': 'Cadastro de Itens',
-            'estoque': 'Controle de Estoque',
-            'movimentacoes': 'Movimentações'
+            'estoque': 'Controle de Estoque'
         };
 
         if (breadcrumb) {
@@ -259,7 +285,7 @@ class EstoqueManager {
         if (logoutBtn) {
             logoutBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                this.logout();
+                this.pedirConfirmacaoLogout();
             });
         }
 
@@ -291,7 +317,7 @@ class EstoqueManager {
             configBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 userDropdown.classList.remove('active');
-                this.showToast('Funcionalidade de Configurações em desenvolvimento', 'info');
+                window.location.href = '../../../settings/index.html';
             });
         }
 
@@ -299,12 +325,22 @@ class EstoqueManager {
             sairBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 userDropdown.classList.remove('active');
-                const opcoes = confirm('Deseja sair do sistema?');
-                if (opcoes) {
-                    this.logout();
-                }
+                this.pedirConfirmacaoLogout();
             });
         }
+    }
+
+    pedirConfirmacaoLogout() {
+        showConfirmModal(
+            'Sair do sistema',
+            'Deseja encerrar sua sessão e voltar para a tela de login?',
+            () => this.logout(),
+            {
+                confirmText: 'Sair',
+                cancelText: 'Cancelar',
+                danger: true,
+            }
+        );
     }
 
     initTheme() {
@@ -699,26 +735,16 @@ class EstoqueManager {
     }
 
     setupFiltrosUsuarios() {
-        // Filtros principais de usuários
         const nomeInput = document.getElementById('nome-input');
         const emailInput = document.getElementById('email-input');
         const btnBuscar = document.getElementById('btn-buscar');
         const btnLimpar = document.getElementById('btn-limpar');
         const btnFiltroAvancado = document.getElementById('btn-filtro-avancado');
 
-        // Event listeners para filtros em tempo real
-        if (nomeInput) {
-            nomeInput.addEventListener('input', () => this.aplicarFiltrosUsuarios());
-        }
-        if (emailInput) {
-            emailInput.addEventListener('input', () => this.aplicarFiltrosUsuarios());
-        }
-        
-        // Event listeners para botões
         if (btnBuscar) {
             btnBuscar.addEventListener('click', () => {
-                this.aplicarFiltrosUsuarios();
-                this.showToast('Filtros aplicados!', 'info');
+                this.paginaUsuarios = 1;
+                this.carregarUsuarios();
             });
         }
         if (btnLimpar) {
@@ -728,8 +754,57 @@ class EstoqueManager {
             btnFiltroAvancado.addEventListener('click', () => this.toggleFiltroAvancadoUsuarios());
         }
 
-        // Filtros para locais
+        // Enter nos filtros dispara busca
+        [nomeInput, emailInput].forEach((input) => {
+            if (!input) return;
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.paginaUsuarios = 1;
+                    this.carregarUsuarios();
+                }
+            });
+        });
+
         this.setupFiltrosLocais();
+    }
+
+    setupPaginacaoUsuarios() {
+        const selectTop = document.getElementById('usuarios-items-select');
+        const selectBottom = document.getElementById('usuarios-items-select-bottom');
+        const pageTop = document.getElementById('usuarios-page-input');
+        const pageBottom = document.getElementById('usuarios-page-input-bottom');
+
+        const onItemsChange = (value) => {
+            this.itensPorPaginaUsuarios = parseInt(value, 10) || 10;
+            this.paginaUsuarios = 1;
+            if (selectTop) selectTop.value = String(this.itensPorPaginaUsuarios);
+            if (selectBottom) selectBottom.value = String(this.itensPorPaginaUsuarios);
+            this.renderUsuarios();
+        };
+
+        const onPageJump = (value) => {
+            const totalPages = Math.max(1, Math.ceil(this.usuariosFiltrados.length / this.itensPorPaginaUsuarios));
+            let page = parseInt(value, 10) || 1;
+            page = Math.min(Math.max(page, 1), totalPages);
+            this.paginaUsuarios = page;
+            this.renderUsuarios();
+        };
+
+        if (selectTop) selectTop.addEventListener('change', (e) => onItemsChange(e.target.value));
+        if (selectBottom) selectBottom.addEventListener('change', (e) => onItemsChange(e.target.value));
+        if (pageTop) {
+            pageTop.addEventListener('change', (e) => onPageJump(e.target.value));
+            pageTop.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') onPageJump(e.target.value);
+            });
+        }
+        if (pageBottom) {
+            pageBottom.addEventListener('change', (e) => onPageJump(e.target.value));
+            pageBottom.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') onPageJump(e.target.value);
+            });
+        }
     }
 
     setupFiltrosLocais() {
@@ -776,17 +851,26 @@ class EstoqueManager {
         const modal = document.getElementById('modal-usuario');
         const modalTitle = document.getElementById('modal-usuario-title');
         const form = document.getElementById('usuario-form');
-        
+        const senhaInput = document.getElementById('senha');
+
         this.usuarioEditando = usuario;
-        
+
         if (usuario) {
             modalTitle.textContent = 'Editar Usuário';
             this.preencherFormUsuario(usuario);
+            if (senhaInput) {
+                senhaInput.required = false;
+                senhaInput.placeholder = 'Deixe em branco para manter a senha';
+            }
         } else {
             modalTitle.textContent = 'Adicionar Usuário';
             form.reset();
+            if (senhaInput) {
+                senhaInput.required = true;
+                senhaInput.placeholder = 'Mínimo 6 caracteres';
+            }
         }
-        
+
         modal.classList.add('active');
     }
 
@@ -797,55 +881,55 @@ class EstoqueManager {
     }
 
     preencherFormUsuario(usuario) {
-        document.getElementById('nome-usuario').value = usuario.nome;
-        document.getElementById('email').value = usuario.email;
-        document.getElementById('ativo').value = usuario.ativo;
-        // Limpar campo senha na edição
+        document.getElementById('nome-usuario').value = usuario.nome || '';
+        document.getElementById('email').value = usuario.email || '';
+        document.getElementById('ativo').value = usuario.ativo || 'S';
         document.getElementById('senha').value = '';
     }
 
-    salvarUsuario() {
-        const nome = document.getElementById('nome-usuario').value;
-        const email = document.getElementById('email').value;
+    async salvarUsuario() {
+        const nome = document.getElementById('nome-usuario').value.trim();
+        const email = document.getElementById('email').value.trim();
         const senha = document.getElementById('senha').value;
         const ativo = document.getElementById('ativo').value;
 
-        const agora = new Date().toLocaleString('pt-BR');
-
-        // Calcular próximo ID sequencial
-        let novoId;
-        if (this.usuarioEditando) {
-            novoId = this.usuarioEditando.id;
-        } else {
-            const maiorId = this.usuarios.length > 0 ? Math.max(...this.usuarios.map(u => u.id)) : 0;
-            novoId = maiorId + 1;
+        if (!nome || nome.length < 3) {
+            showNotification('Informe um nome com pelo menos 3 caracteres.', 'warning');
+            return;
+        }
+        if (!email) {
+            showNotification('Informe um e-mail válido.', 'warning');
+            return;
         }
 
-        const novoUsuario = {
-            id: novoId,
-            nome,
-            email,
-            senha: this.usuarioEditando && !senha ? this.usuarioEditando.senha : senha, // Manter senha existente se não foi alterada
-            ativo,
-            dataCriacao: this.usuarioEditando ? this.usuarioEditando.dataCriacao : agora,
-            criadoPor: this.usuarioEditando ? this.usuarioEditando.criadoPor : this.usuarioLogado,
-            dataAlteracao: agora,
-            alteradoPor: this.usuarioLogado
-        };
+        try {
+            if (this.usuarioEditando) {
+                const payload = { nome, email, ativo };
+                if (senha) {
+                    if (senha.length < 6) {
+                        showNotification('A senha deve ter pelo menos 6 caracteres.', 'warning');
+                        return;
+                    }
+                    payload.senha = senha;
+                }
+                const id = this.usuarioEditando.id_usuario;
+                await api.put(`/usuarios/${id}`, payload);
+                showNotification('Usuário atualizado com sucesso!', 'success');
+            } else {
+                if (!senha || senha.length < 6) {
+                    showNotification('A senha deve ter pelo menos 6 caracteres.', 'warning');
+                    return;
+                }
+                await api.post('/usuarios/', { nome, email, senha, ativo });
+                showNotification('Usuário criado com sucesso!', 'success');
+            }
 
-        if (this.usuarioEditando) {
-            const index = this.usuarios.findIndex(u => u.id === this.usuarioEditando.id);
-            this.usuarios[index] = novoUsuario;
-            this.showToast('Usuário atualizado com sucesso!', 'success');
-        } else {
-            this.usuarios.push(novoUsuario);
-            this.showToast('Usuário adicionado com sucesso!', 'success');
+            this.fecharModalUsuario();
+            await this.carregarUsuarios();
+            this.loadDashboardStats();
+        } catch (error) {
+            showNotification(error.message || 'Não foi possível salvar o usuário.', 'error');
         }
-
-        this.salvarUsuariosLocalStorage();
-        this.renderUsuarios();
-        this.updateMiniStats(); // Atualizar estatísticas
-        this.fecharModalUsuario();
     }
 
     excluirUsuario(id) {
@@ -878,43 +962,125 @@ class EstoqueManager {
         this.usuarioExcluindo = null;
     }
 
-    confirmarExclusao() {
-        if (this.usuarioExcluindo) {
-            this.usuarios = this.usuarios.filter(u => u.id !== this.usuarioExcluindo);
-            this.salvarUsuariosLocalStorage();
-            this.renderUsuarios();
+    async confirmarExclusao() {
+        if (!this.usuarioExcluindo) {
+            this.fecharModalConfirmacao();
+            return;
         }
+
+        const id = this.usuarioExcluindo;
         this.fecharModalConfirmacao();
+
+        try {
+            await api.delete(`/usuarios/${id}`);
+            showNotification('Usuário inativado com sucesso!', 'success');
+            await this.carregarUsuarios();
+            this.loadDashboardStats();
+        } catch (error) {
+            showNotification(error.message || 'Não foi possível inativar o usuário.', 'error');
+        }
+    }
+
+    /**
+     * Busca usuários na API (GET /api/usuarios) e atualiza o estado da tabela.
+     */
+    async carregarUsuarios() {
+        const tbody = document.getElementById('usuarios-tbody');
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align:center;padding:1.5rem;color:#6b7280;">
+                        Carregando usuários...
+                    </td>
+                </tr>
+            `;
+        }
+
+        const nome = document.getElementById('nome-input')?.value.trim() || '';
+        const email = document.getElementById('email-input')?.value.trim() || '';
+
+        const params = new URLSearchParams();
+        if (nome) params.set('nome', nome);
+        if (email) params.set('email', email);
+
+        const query = params.toString();
+        const path = query ? `/usuarios/?${query}` : '/usuarios/';
+
+        try {
+            const data = await api.get(path);
+            this.usuarios = Array.isArray(data) ? data : [];
+            this.usuariosFiltrados = [...this.usuarios];
+
+            const totalPages = Math.max(1, Math.ceil(this.usuariosFiltrados.length / this.itensPorPaginaUsuarios));
+            if (this.paginaUsuarios > totalPages) {
+                this.paginaUsuarios = totalPages;
+            }
+
+            this.renderUsuarios();
+        } catch (error) {
+            this.usuarios = [];
+            this.usuariosFiltrados = [];
+            if (tbody) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align:center;padding:1.5rem;color:#b91c1c;">
+                            Falha ao carregar usuários.
+                        </td>
+                    </tr>
+                `;
+            }
+            showNotification(error.message || 'Não foi possível carregar os usuários.', 'error');
+        }
     }
 
     renderUsuarios() {
         const tbody = document.getElementById('usuarios-tbody');
         if (!tbody) return;
 
+        const lista = this.usuariosFiltrados;
+        const total = lista.length;
+        const totalPages = Math.max(1, Math.ceil(total / this.itensPorPaginaUsuarios));
+        if (this.paginaUsuarios > totalPages) this.paginaUsuarios = totalPages;
+        if (this.paginaUsuarios < 1) this.paginaUsuarios = 1;
+
+        const start = (this.paginaUsuarios - 1) * this.itensPorPaginaUsuarios;
+        const pageItems = lista.slice(start, start + this.itensPorPaginaUsuarios);
+
         tbody.innerHTML = '';
 
-        this.usuarios.forEach(usuario => {
-            const row = document.createElement('tr');
+        if (pageItems.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align:center;padding:1.5rem;color:#6b7280;">
+                        Nenhum usuário encontrado.
+                    </td>
+                </tr>
+            `;
+            this.renderPaginacaoUsuarios(totalPages);
+            return;
+        }
+
+        pageItems.forEach((usuario) => {
+            const id = usuario.id_usuario;
             const isAtivo = usuario.ativo === 'S';
+            const row = document.createElement('tr');
             row.innerHTML = `
                 <td class="checkbox-col">
-                    <input type="checkbox" class="user-checkbox" data-id="${usuario.id}">
+                    <input type="checkbox" class="user-checkbox" data-id="${id}">
                 </td>
-                <td class="id-col">${usuario.id}</td>
-                <td class="name-col">${usuario.nome}</td>
-                <td class="email-col">${usuario.email}</td>
-                <td class="status-col">
-                    ${isAtivo ? 'Ativo' : 'Inativo'}
-                </td>
+                <td class="id-col">${id}</td>
+                <td class="name-col"></td>
+                <td class="email-col"></td>
+                <td class="status-col">${isAtivo ? 'Ativo' : 'Inativo'}</td>
                 <td class="actions-col">
                     <div class="actions">
-                        <button class="btn-edit" onclick="estoque.abrirModalUsuario(${JSON.stringify(usuario).replace(/"/g, '&quot;')})" title="Editar">
+                        <button type="button" class="btn-edit" data-action="edit" data-id="${id}" title="Editar">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                 <path d="m18.5 2.5 a2.12 2.12 0 0 1 3 3l-9.5 9.5-4 1 1-4 9.5-9.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
                         </button>
-                        <button class="btn-delete" onclick="estoque.excluirUsuario(${usuario.id})" title="Excluir">
+                        <button type="button" class="btn-delete" data-action="delete" data-id="${id}" title="Excluir">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14ZM10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
@@ -922,32 +1088,67 @@ class EstoqueManager {
                     </div>
                 </td>
             `;
+            row.querySelector('.name-col').textContent = usuario.nome || '';
+            row.querySelector('.email-col').textContent = usuario.email || '';
+
+            row.querySelector('[data-action="edit"]').addEventListener('click', () => {
+                this.abrirModalUsuario(usuario);
+            });
+            row.querySelector('[data-action="delete"]').addEventListener('click', () => {
+                this.excluirUsuario(id);
+            });
+
             tbody.appendChild(row);
         });
-        
-        // Atualizar contadores na tabela
-        this.updateTableCounters();
+
+        this.renderPaginacaoUsuarios(totalPages);
     }
 
-    aplicarFiltrosUsuarios() {
-        const nome = document.getElementById('nome-input')?.value.toLowerCase() || '';
-        const email = document.getElementById('email-input')?.value.toLowerCase() || '';
+    renderPaginacaoUsuarios(totalPages) {
+        const containers = document.querySelectorAll('[data-pagination="usuarios"]');
+        const pageTop = document.getElementById('usuarios-page-input');
+        const pageBottom = document.getElementById('usuarios-page-input-bottom');
 
-        let usuariosFiltrados = this.usuarios;
+        if (pageTop) pageTop.value = String(this.paginaUsuarios);
+        if (pageBottom) pageBottom.value = String(this.paginaUsuarios);
+        if (pageTop) pageTop.max = String(totalPages);
+        if (pageBottom) pageBottom.max = String(totalPages);
 
-        if (nome) {
-            usuariosFiltrados = usuariosFiltrados.filter(usuario =>
-                usuario.nome.toLowerCase().includes(nome)
-            );
-        }
+        const makeButtons = (container) => {
+            container.innerHTML = '';
 
-        if (email) {
-            usuariosFiltrados = usuariosFiltrados.filter(usuario =>
-                usuario.email.toLowerCase().includes(email)
-            );
-        }
+            const addBtn = (label, page, disabled = false, active = false) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `pagination-btn${active ? ' active' : ''}`;
+                btn.textContent = label;
+                btn.disabled = disabled;
+                if (!disabled && !active) {
+                    btn.addEventListener('click', () => {
+                        this.paginaUsuarios = page;
+                        this.renderUsuarios();
+                    });
+                }
+                container.appendChild(btn);
+            };
 
-        this.renderUsuariosFiltrados(usuariosFiltrados);
+            addBtn('«', 1, this.paginaUsuarios <= 1);
+            addBtn('‹', this.paginaUsuarios - 1, this.paginaUsuarios <= 1);
+
+            const windowSize = 5;
+            let start = Math.max(1, this.paginaUsuarios - Math.floor(windowSize / 2));
+            let end = Math.min(totalPages, start + windowSize - 1);
+            start = Math.max(1, end - windowSize + 1);
+
+            for (let p = start; p <= end; p += 1) {
+                addBtn(String(p), p, false, p === this.paginaUsuarios);
+            }
+
+            addBtn('›', this.paginaUsuarios + 1, this.paginaUsuarios >= totalPages);
+            addBtn('»', totalPages, this.paginaUsuarios >= totalPages);
+        };
+
+        containers.forEach(makeButtons);
     }
 
     limparFiltrosUsuarios() {
@@ -957,125 +1158,71 @@ class EstoqueManager {
         if (nomeInput) nomeInput.value = '';
         if (emailInput) emailInput.value = '';
 
-        this.renderUsuarios();
-        this.showToast('Filtros de usuários limpos!', 'info');
+        this.paginaUsuarios = 1;
+        this.carregarUsuarios();
+        showNotification('Filtros limpos.', 'info');
     }
 
     toggleFiltroAvancadoUsuarios() {
-        // Funcionalidade de filtro avançado para usuários (a ser implementada)
-        this.showToast('Filtro avançado de usuários em desenvolvimento', 'info');
+        showNotification('Filtro avançado de usuários em desenvolvimento', 'info');
     }
 
     toggleFiltroAvancadoLocais() {
-        // Funcionalidade de filtro avançado para locais (a ser implementada)
-        this.showToast('Filtro avançado de locais em desenvolvimento', 'info');
-    }
-
-    renderUsuariosFiltrados(usuarios) {
-        const tbody = document.getElementById('usuarios-tbody');
-        if (!tbody) return;
-
-        tbody.innerHTML = '';
-
-        usuarios.forEach(usuario => {
-            const row = document.createElement('tr');
-            const isAtivo = usuario.ativo === 'S';
-            row.innerHTML = `
-                <td>${usuario.id}</td>
-                <td>${usuario.nome}</td>
-                <td>${usuario.email}</td>
-                <td><span class="status ${isAtivo ? 'em-estoque' : 'sem-estoque'}">
-                    ${isAtivo ? 'Ativo' : 'Inativo'}</span></td>
-                <td>${usuario.dataCriacao}</td>
-                <td>${usuario.criadoPor}</td>
-                <td>${usuario.dataAlteracao}</td>
-                <td>${usuario.alteradoPor}</td>
-                <td class="actions">
-                    <button class="btn-edit" onclick="estoque.abrirModalUsuario(${JSON.stringify(usuario).replace(/"/g, '&quot;')})">Editar</button>
-                    <button class="btn-delete" onclick="estoque.excluirUsuario(${usuario.id})">Excluir</button>
-                </td>
-            `;
-            tbody.appendChild(row);
-        });
-    }
-
-    salvarUsuariosLocalStorage() {
-        localStorage.setItem('usuarios', JSON.stringify(this.usuarios));
-    }
-
-    adicionarUsuariosExemplo() {
-        const usuarios = [
-            {
-                id: 1,
-                nome: 'Arthur Moraes',
-                email: 'arthur.moraes@chvn.com.br',
-                senha: '123456',
-                ativo: 'S',
-                cpf: '272.037.428-81',
-                dataNascimento: '19/04/1975',
-                dataCriacao: '25/02/2026, 09:00:00',
-                criadoPor: 'Sistema',
-                dataAlteracao: '25/02/2026, 12:35:00',
-                alteradoPor: 'Sistema'
-            }
-        ];
-
-        this.usuarios = usuarios;
-        this.salvarUsuariosLocalStorage();
-        this.renderUsuarios();
+        showNotification('Filtro avançado de locais em desenvolvimento', 'info');
     }
 
     updateTableCounters() {
-        // Método removido - contadores não são mais exibidos na interface
         return;
     }
 
     verInfoUsuario(id) {
-        const usuario = this.usuarios.find(u => u.id === id);
+        const usuario = this.usuarios.find((u) => u.id_usuario === id);
         if (usuario) {
-            alert(`Informações do usuário:\n\nID: ${usuario.id}\nNome: ${usuario.nome}\nEmail: ${usuario.email}\nStatus: ${usuario.ativo === 'S' ? 'Ativo' : 'Inativo'}\nCPF: ${usuario.cpf || 'Não informado'}\nData de Nascimento: ${usuario.dataNascimento || 'Não informada'}`);
+            showNotification(
+                `ID ${usuario.id_usuario} · ${usuario.nome} · ${usuario.email}`,
+                'info'
+            );
         }
     }
 
     exportarUsuarios() {
         if (this.usuarios.length === 0) {
-            this.showToast('Nenhum usuário para exportar', 'warning');
+            showNotification('Nenhum usuário para exportar', 'warning');
             return;
         }
 
-        // Preparar dados para exportação
-        const dadosExportacao = this.usuarios.map(usuario => ({
-            'ID': usuario.id,
-            'Nome': usuario.nome,
-            'Email': usuario.email,
-            'Status': usuario.ativo === 'S' ? 'Ativo' : 'Inativo',
-            'Data Criação': usuario.dataCriacao || '',
-            'Criado Por': usuario.criadoPor || ''
+        const dadosExportacao = this.usuarios.map((usuario) => ({
+            ID: usuario.id_usuario,
+            Nome: usuario.nome,
+            Email: usuario.email,
+            Status: usuario.ativo === 'S' ? 'Ativo' : 'Inativo',
+            Cargo: usuario.cargo || '',
         }));
 
-        // Converter para CSV
         const headers = Object.keys(dadosExportacao[0]);
         const csvContent = [
             headers.join(','),
-            ...dadosExportacao.map(row => 
-                headers.map(header => `"${row[header]}"`).join(',')
-            )
+            ...dadosExportacao.map((row) =>
+                headers.map((header) => `"${row[header]}"`).join(',')
+            ),
         ].join('\n');
 
-        // Criar e baixar arquivo
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
-        
+
         if (link.download !== undefined) {
             const url = URL.createObjectURL(blob);
             link.setAttribute('href', url);
-            link.setAttribute('download', `usuarios_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`);
+            link.setAttribute(
+                'download',
+                `usuarios_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`
+            );
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            
-            this.showToast(`${this.usuarios.length} usuários exportados com sucesso!`, 'success');
+
+            showNotification(`${this.usuarios.length} usuários exportados com sucesso!`, 'success');
         }
     }
 

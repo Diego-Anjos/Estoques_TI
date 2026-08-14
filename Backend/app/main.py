@@ -15,6 +15,11 @@ from app.routers import (
     software_router,
     ocorrencia_router,
     dashboard_router,
+    local_router,
+    tipo_item_router,
+    movimentacao_router,
+    configuracao_router,
+    exportacao_router,
 )
 
 
@@ -76,6 +81,11 @@ app.include_router(patrimonio_router.router, prefix=settings.API_PREFIX)
 app.include_router(software_router.router, prefix=settings.API_PREFIX)
 app.include_router(ocorrencia_router.router, prefix=settings.API_PREFIX)
 app.include_router(dashboard_router.router, prefix=settings.API_PREFIX)
+app.include_router(local_router.router, prefix=settings.API_PREFIX)
+app.include_router(tipo_item_router.router, prefix=settings.API_PREFIX)
+app.include_router(movimentacao_router.router, prefix=settings.API_PREFIX)
+app.include_router(configuracao_router.router, prefix=settings.API_PREFIX)
+app.include_router(exportacao_router.router, prefix=settings.API_PREFIX)
 
 
 @app.get("/")

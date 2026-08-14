@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurações - Sistema Controle de Estoque</title>
+    <script src="../../shared/js/theme-boot.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../../shared/css/responsive.css">
+    <link rel="stylesheet" href="../../shared/css/notify.css">
+    <link rel="stylesheet" href="../../shared/css/confirmModal.css">
+</head>
+<body>
+    <aside id="app-sidebar" class="app-sidebar" aria-label="Menu principal">
+        <div class="app-sidebar-brand">Controle de Estoque</div>
+        <nav class="app-sidebar-nav">
+            <a href="../auth/dashboard/paginainicial/index.html">Dashboard</a>
+            <a href="../auth/dashboard/paginainicial/index.html#usuarios">Gestão de Usuários</a>
+            <a href="../inventory/locations/index.html">Controle de Locais</a>
+            <a href="../inventory/item-types/index.html">Tipos de Item</a>
+            <a href="../inventory/items/index.html">Cadastro de Itens</a>
+            <a href="../inventory/stock-control/index.html">Controle de Estoque</a>
+            <a href="../profile/index.html">Meu Perfil</a>
+            <a href="index.html" class="active">Configurações</a>
+        </nav>
+    </aside>
+
+    <header class="header">
+        <div class="header-content">
+            <div class="left-section">
+                <button type="button" class="menu-toggle" id="menu-toggle" aria-label="Abrir menu" aria-expanded="false" aria-controls="app-sidebar">
+                    <span class="menu-toggle-bars" aria-hidden="true">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                </button>
+                <span class="greeting" id="user-greeting">Olá</span>
+            </div>
+            <div class="center-section">
+                <nav class="breadcrumb" id="breadcrumb">
+                    <a href="../auth/dashboard/paginainicial/index.html" class="breadcrumb-item">Dashboard</a>
+                    <span class="breadcrumb-sep">/</span>
+                    <span class="breadcrumb-item active">Configurações</span>
+                </nav>
+            </div>
+            <div class="right-section">
+                <button class="theme-toggle" id="theme-toggle" title="Alternar tema" type="button">
+                    <span class="theme-icon">◐</span>
+                </button>
+                <a href="../auth/dashboard/paginainicial/index.html" class="back-header-link" title="Voltar ao Dashboard">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 12H5M5 12l6-6M5 12l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Configurações do Sistema</h1>
+                <p class="page-subtitle">Preferências gerais, alertas e ferramentas administrativas</p>
+            </div>
+        </div>
+
+        <div class="settings-shell">
+            <nav class="settings-tabs" role="tablist" aria-label="Categorias de configuração">
+                <button type="button" class="settings-tab is-active" role="tab" aria-selected="true" data-tab="geral">Geral</button>
+                <button type="button" class="settings-tab" role="tab" aria-selected="false" data-tab="alertas">Alertas de Estoque</button>
+                <button type="button" class="settings-tab" role="tab" aria-selected="false" data-tab="importacao">Importação/Exportação</button>
+                <button type="button" class="settings-tab" role="tab" aria-selected="false" data-tab="auditoria">Auditoria</button>
+            </nav>
+
+            <div class="settings-panels">
+                <!-- GERAL -->
+                <section class="settings-panel is-active" id="panel-geral" role="tabpanel" data-panel="geral">
+                    <article class="settings-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                                    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" stroke="currentColor" stroke-width="2"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2>Preferências Gerais</h2>
+                                <p>Aparência e identificação da empresa</p>
+                            </div>
+                        </div>
+
+                        <div class="settings-row">
+                            <div class="settings-row-text">
+                                <strong>Modo Escuro</strong>
+                                <span>Alterna o tema visual do sistema</span>
+                            </div>
+                            <label class="switch" title="Ativar modo escuro">
+                                <input type="checkbox" id="toggle-dark-mode">
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="nome-empresa">Nome da Empresa</label>
+                            <input type="text" id="nome-empresa" maxlength="120" placeholder="Ex.: Estoques TI Ltda" value="Controle de Estoque">
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn-primary" id="btn-salvar-geral">Salvar Preferências</button>
+                        </div>
+                    </article>
+                </section>
+
+                <!-- ALERTAS -->
+                <section class="settings-panel" id="panel-alertas" role="tabpanel" data-panel="alertas" hidden>
+                    <article class="settings-card">
+                        <div class="card-header">
+                            <div class="card-icon warning">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2>Alertas de Estoque</h2>
+                                <p>Defina o limite mínimo global para avisos</p>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="estoque-minimo-global">Alerta Global de Estoque Mínimo</label>
+                            <input type="number" id="estoque-minimo-global" min="0" step="1" value="5" placeholder="Ex.: 5">
+                            <small class="field-hint">Itens com quantidade igual ou inferior a este valor serão destacados.</small>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn-primary" id="btn-salvar-alerta">Salvar Regra</button>
+                        </div>
+                    </article>
+                </section>
+
+                <!-- IMPORTAÇÃO / EXPORTAÇÃO -->
+                <section class="settings-panel" id="panel-importacao" role="tabpanel" data-panel="importacao" hidden>
+                    <article class="settings-card">
+                        <div class="card-header">
+                            <div class="card-icon export">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <polyline points="7 10 12 15 17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2>Importação / Exportação</h2>
+                                <p>Exporte dados do inventário e do histórico</p>
+                            </div>
+                        </div>
+
+                        <div class="export-grid">
+                            <button type="button" class="export-btn" id="btn-export-inventario">
+                                <span class="export-btn-icon">CSV</span>
+                                <strong>Exportar Inventário (CSV)</strong>
+                                <span>Baixa a lista de itens com saldos atuais</span>
+                            </button>
+                            <button type="button" class="export-btn" id="btn-export-movimentacoes">
+                                <span class="export-btn-icon alt">CSV</span>
+                                <strong>Exportar Movimentações (CSV)</strong>
+                                <span>Baixa o histórico de entradas e saídas</span>
+                            </button>
+                        </div>
+                    </article>
+                </section>
+
+                <!-- AUDITORIA -->
+                <section class="settings-panel" id="panel-auditoria" role="tabpanel" data-panel="auditoria" hidden>
+                    <article class="settings-card">
+                        <div class="card-header">
+                            <div class="card-icon audit">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2>Auditoria</h2>
+                                <p>Registro de ações e alterações no sistema</p>
+                            </div>
+                        </div>
+
+                        <div class="audit-placeholder">
+                            <p>Tabela de logs em construção</p>
+                        </div>
+                    </article>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>

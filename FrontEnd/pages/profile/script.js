@@ -1,6 +1,7 @@
 import { api } from '../../shared/js/api.js';
 import { getSession, isAuthenticated, clearSession, saveSession } from '../../shared/js/auth.js';
 import { showNotification } from '../../shared/js/notify.js';
+import { initSidebar } from '../../shared/js/sidebar.js';
 
 const LOGIN_URL = '../auth/login/index.html';
 
@@ -96,7 +97,6 @@ function buildPayload() {
 
   const payload = { nome, email, cargo };
 
-  // Só envia senha se o usuário preencheu
   if (senha) {
     payload.senha = senha;
   }
@@ -145,6 +145,7 @@ async function handleSubmit(event) {
 document.addEventListener('DOMContentLoaded', () => {
   fillFormFromSession();
   initTheme();
+  initSidebar();
 
   form.addEventListener('submit', handleSubmit);
 

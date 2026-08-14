@@ -4,16 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tipos de Item - Sistema Controle de Estoque</title>
+    <script src="../../../shared/js/theme-boot.js"></script>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../../../shared/css/responsive.css">
+    <link rel="stylesheet" href="../../../shared/css/notify.css">
+    <link rel="stylesheet" href="../../../shared/css/confirmModal.css">
 </head>
 <body>
     <header class="header">
         <div class="header-content">
             <div class="left-section">
-                <span class="greeting">Olá, Maria</span>
+                <span class="greeting" id="user-greeting">Olá</span>
             </div>
             <div class="center-section">
                 <nav class="breadcrumb" id="breadcrumb">
+                    <a href="../../auth/dashboard/paginainicial/index.html" class="breadcrumb-item">Dashboard</a>
+                    <span class="breadcrumb-sep">/</span>
                     <span class="breadcrumb-item active">Tipos de Item</span>
                 </nav>
             </div>
@@ -38,7 +44,7 @@
                         </span>
                     </button>
                     <div class="dropdown-content" id="user-dropdown-content">
-                        <a href="#" class="dropdown-item" id="perfil-btn">
+                        <a href="../../profile/index.html" class="dropdown-item" id="perfil-btn">
                             <span class="item-icon">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <circle cx="12" cy="8" r="5" stroke="currentColor" stroke-width="2"/>
@@ -46,15 +52,6 @@
                                 </svg>
                             </span>
                             Perfil
-                        </a>
-                        <a href="#" class="dropdown-item" id="config-btn">
-                            <span class="item-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" stroke="currentColor" stroke-width="2"/>
-                                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
-                                </svg>
-                            </span>
-                            Configurações
                         </a>
                         <a href="#" class="dropdown-item" id="sair-btn">
                             <span class="item-icon">
@@ -73,7 +70,6 @@
     </header>
 
     <main class="main-content">
-        <!-- Header com título e botões -->
         <div class="filters-header">
             <h2 class="page-title">Gestão de Tipos de Item</h2>
             <div class="header-buttons">
@@ -83,7 +79,7 @@
                         <path d="M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </button>
-                <button class="btn-add-tipo" id="btn-adicionar-tipo">
+                <button class="btn-add-tipo" id="btn-adicionar-tipo" title="Adicionar tipo">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -91,35 +87,35 @@
             </div>
         </div>
 
-        <!-- Filtros principais -->
         <div class="main-filters" id="main-filters-tipos">
             <div class="filter-row">
                 <div class="filter-group">
                     <label>Nome do Tipo:</label>
                     <input type="text" class="filter-input-new" placeholder="Digite o nome do tipo" id="nome-tipo-input">
                 </div>
-                
                 <div class="filter-group">
                     <label>Categoria:</label>
                     <select class="filter-select-new" id="categoria-tipo-select">
                         <option value="">Todas as categorias</option>
-                        <option value="material">Material</option>
-                        <option value="equipamento">Equipamento</option>
-                        <option value="consumivel">Consumível</option>
-                        <option value="ferramenta">Ferramenta</option>
-                        <option value="componente">Componente</option>
+                        <option value="Hardware">Hardware</option>
+                        <option value="Software">Software</option>
+                        <option value="Redes">Redes</option>
+                        <option value="Consumível">Consumível</option>
+                        <option value="Material">Material</option>
+                        <option value="Equipamento">Equipamento</option>
+                        <option value="Ferramenta">Ferramenta</option>
+                        <option value="Componente">Componente</option>
                     </select>
                 </div>
-                
                 <div class="filter-actions">
-                    <button class="btn-loading" id="btn-buscar-tipos">
+                    <button class="btn-loading" id="btn-buscar-tipos" type="button">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
                             <path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                         Buscar
                     </button>
-                    <button class="btn-clear" id="btn-limpar-tipos">
+                    <button class="btn-clear" id="btn-limpar-tipos" type="button">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
@@ -127,56 +123,13 @@
                     </button>
                 </div>
             </div>
-
-            <!-- Filtro avançado -->
-            <div class="advanced-filter">
-                <button class="btn-advanced-filter" id="btn-filtro-avancado-tipos">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    Filtro avançado
-                </button>
-            </div>
         </div>
 
-        <!-- Área de conteúdo -->
         <div class="content-area">
-            <!-- Header da tabela -->
-            <div class="table-header">
-                <div class="table-header-content">
-                    <div class="table-pagination-top">
-                        <div class="pagination-controls">
-                            <button class="pagination-btn">«</button>
-                            <button class="pagination-btn">‹</button>
-                            <button class="pagination-btn active">1</button>
-                            <button class="pagination-btn">›</button>
-                            <button class="pagination-btn">»</button>
-                        </div>
-                        <div class="page-controls">
-                            <span>Ir para:</span>
-                            <input type="number" class="page-input" value="1" min="1">
-                        </div>
-                        <div class="items-per-page">
-                            <span>Itens por página:</span>
-                            <select class="items-select">
-                                <option value="10" selected>10</option>
-                                <option value="25">25</option>
-                                <option value="50">50</option>
-                                <option value="100">100</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tabela -->
             <div class="tipos-table-container">
                 <table class="tipos-table" id="tipos-table">
                     <thead>
                         <tr>
-                            <th class="checkbox-col">
-                                <input type="checkbox" id="select-all-tipos">
-                            </th>
                             <th class="id-col">ID</th>
                             <th class="name-col">Nome do Tipo</th>
                             <th class="category-col">Categoria</th>
@@ -184,8 +137,6 @@
                             <th class="status-col">Status</th>
                             <th class="date-creation-col">Data Criação</th>
                             <th class="created-by-col">Criado Por</th>
-                            <th class="date-modification-col">Data Alteração</th>
-                            <th class="modified-by-col">Alterado Por</th>
                             <th class="actions-col">Ações</th>
                         </tr>
                     </thead>
@@ -194,38 +145,9 @@
                     </tbody>
                 </table>
             </div>
-
-            <!-- Footer da tabela -->
-            <div class="table-footer">
-                <div class="table-footer-content">
-                    <div class="table-pagination-bottom">
-                        <div class="pagination-controls">
-                            <button class="pagination-btn">«</button>
-                            <button class="pagination-btn">‹</button>
-                            <button class="pagination-btn active">1</button>
-                            <button class="pagination-btn">›</button>
-                            <button class="pagination-btn">»</button>
-                        </div>
-                        <div class="page-controls">
-                            <span>Ir para:</span>
-                            <input type="number" class="page-input" value="1" min="1">
-                        </div>
-                        <div class="items-per-page">
-                            <span>Itens por página:</span>
-                            <select class="items-select">
-                                <option value="10" selected>10</option>
-                                <option value="25">25</option>
-                                <option value="50">50</option>
-                                <option value="100">100</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </main>
 
-    <!-- Modal para adicionar/editar tipo -->
     <div id="modal-tipo" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -233,24 +155,28 @@
                 <span class="close" id="close-tipo">&times;</span>
             </div>
             <form id="tipo-form" class="tipo-form">
+                <input type="hidden" id="tipo-id" name="tipo-id" value="">
                 <div class="form-group">
                     <label for="nome-tipo">Nome do Tipo:</label>
-                    <input type="text" id="nome-tipo" name="nome-tipo" required placeholder="Ex: Material de Construção">
+                    <input type="text" id="nome-tipo" name="nome-tipo" required minlength="2" maxlength="120" placeholder="Ex: Material de Construção">
                 </div>
                 <div class="form-group">
                     <label for="categoria-tipo">Categoria:</label>
                     <select id="categoria-tipo" name="categoria-tipo" required>
                         <option value="">Selecione uma categoria</option>
-                        <option value="material">Material</option>
-                        <option value="equipamento">Equipamento</option>
-                        <option value="consumivel">Consumível</option>
-                        <option value="ferramenta">Ferramenta</option>
-                        <option value="componente">Componente</option>
+                        <option value="Hardware">Hardware</option>
+                        <option value="Software">Software</option>
+                        <option value="Redes">Redes</option>
+                        <option value="Consumível">Consumível</option>
+                        <option value="Material">Material</option>
+                        <option value="Equipamento">Equipamento</option>
+                        <option value="Ferramenta">Ferramenta</option>
+                        <option value="Componente">Componente</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="descricao-tipo">Descrição:</label>
-                    <textarea id="descricao-tipo" name="descricao-tipo" rows="3" placeholder="Descrição detalhada do tipo de item"></textarea>
+                    <textarea id="descricao-tipo" name="descricao-tipo" rows="3" maxlength="400" placeholder="Descrição detalhada do tipo de item"></textarea>
                 </div>
                 <div class="form-group">
                     <label for="status-tipo">Status:</label>
@@ -267,30 +193,6 @@
         </div>
     </div>
 
-    <!-- Modal de confirmação de exclusão para tipos -->
-    <div id="modal-confirmacao-tipo" class="modal">
-        <div class="modal-content modal-confirmacao-content">
-            <div class="modal-header-confirmacao">
-                <div class="warning-icon">⚠️</div>
-                <h3>Confirmar Exclusão</h3>
-            </div>
-            <div class="modal-body-confirmacao">
-                <p>Tem certeza que deseja excluir este tipo de item?</p>
-                <p class="warning-text">Esta ação não poderá ser desfeita.</p>
-            </div>
-            <div class="form-actions-confirmacao">
-                <button type="button" class="btn-warning-improved" id="btn-cancelar-exclusao-tipo">
-                    <span class="btn-icon">←</span>
-                    Voltar
-                </button>
-                <button type="button" class="btn-danger-improved" id="btn-confirmar-exclusao-tipo">
-                    <span class="btn-icon">🗑️</span>
-                    Sim, excluir
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
 </body>
 </html>

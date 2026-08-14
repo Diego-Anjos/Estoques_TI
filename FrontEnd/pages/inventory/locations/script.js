@@ -12,20 +12,20 @@ if (!isAuthenticated()) {
 }
 
 const sessao = getSession();
-let tiposCache = [];
-let tipoEditandoId = null;
+let locaisCache = [];
+let localEditandoId = null;
 
-const tbody = document.getElementById('tipos-tbody');
-const modal = document.getElementById('modal-tipo');
-const form = document.getElementById('tipo-form');
-const modalTitle = document.getElementById('modal-tipo-title');
-const tipoIdInput = document.getElementById('tipo-id');
-const nomeInput = document.getElementById('nome-tipo');
-const categoriaSelect = document.getElementById('categoria-tipo');
-const descricaoInput = document.getElementById('descricao-tipo');
-const statusSelect = document.getElementById('status-tipo');
-const filtroNome = document.getElementById('nome-tipo-input');
-const filtroCategoria = document.getElementById('categoria-tipo-select');
+const tbody = document.getElementById('locais-tbody');
+const modal = document.getElementById('modal-local');
+const form = document.getElementById('local-form');
+const modalTitle = document.getElementById('modal-local-title');
+const nomeInput = document.getElementById('nome-local');
+const setorInput = document.getElementById('setor-local');
+const descricaoInput = document.getElementById('descricao-local');
+const statusSelect = document.getElementById('status-local');
+const localIdInput = document.getElementById('local-id');
+const filtroNome = document.getElementById('nome-input');
+const filtroSetor = document.getElementById('setor-input');
 const greeting = document.getElementById('user-greeting');
 
 function escapeHtml(value) {
@@ -37,37 +37,32 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
-function formatarData(valor) {
-  if (!valor) return '—';
-  const date = new Date(valor);
-  if (Number.isNaN(date.getTime())) return '—';
-  return date.toLocaleDateString('pt-BR');
-}
-
 function statusClass(status) {
   const normalized = String(status || 'Ativo').toLowerCase();
-  return normalized.includes('inativ') ? 'inativo' : 'ativo';
+  if (normalized.includes('inativ')) return 'inativo';
+  if (normalized.includes('manut')) return 'manutencao';
+  return 'ativo';
 }
 
-function tiposFiltrados() {
+function locaisFiltrados() {
   const nome = (filtroNome?.value || '').trim().toLowerCase();
-  const categoria = (filtroCategoria?.value || '').trim().toLowerCase();
+  const setor = (filtroSetor?.value || '').trim().toLowerCase();
 
-  return tiposCache.filter((tipo) => {
-    const okNome = !nome || String(tipo.nome || '').toLowerCase().includes(nome);
-    const okCategoria = !categoria || String(tipo.categoria || '').toLowerCase() === categoria;
-    return okNome && okCategoria;
+  return locaisCache.filter((local) => {
+    const okNome = !nome || String(local.nome || '').toLowerCase().includes(nome);
+    const okSetor = !setor || String(local.setor || '').toLowerCase().includes(setor);
+    return okNome && okSetor;
   });
 }
 
-function renderizarTabela(lista = tiposFiltrados()) {
+function renderizarTabela(lista = locaisFiltrados()) {
   if (!tbody) return;
 
   if (!lista.length) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="8" style="text-align:center;padding:1.5rem;color:#6b7280;">
-          Nenhum tipo de item encontrado.
+        <td colspan="6" style="text-align:center;padding:1.5rem;color:#6b7280;">
+          Nenhum local encontrado.
         </td>
       </tr>
     `;
@@ -75,28 +70,26 @@ function renderizarTabela(lista = tiposFiltrados()) {
   }
 
   tbody.innerHTML = lista
-    .map((tipo) => {
-      const status = tipo.status || 'Ativo';
+    .map((local) => {
+      const status = local.status || 'Ativo';
       return `
-        <tr data-id="${tipo.id_tipo_item}">
-          <td class="id-col">${escapeHtml(tipo.id_tipo_item)}</td>
-          <td class="name-col">${escapeHtml(tipo.nome)}</td>
-          <td class="category-col">${escapeHtml(tipo.categoria || '—')}</td>
-          <td class="description-col">${escapeHtml(tipo.descricao || '—')}</td>
+        <tr data-id="${local.id_local}">
+          <td class="id-col">${escapeHtml(local.id_local)}</td>
+          <td class="name-col">${escapeHtml(local.nome)}</td>
+          <td class="setor-col">${escapeHtml(local.setor || '—')}</td>
+          <td class="description-col">${escapeHtml(local.descricao || '—')}</td>
           <td class="status-col">
             <span class="status ${statusClass(status)}">${escapeHtml(status)}</span>
           </td>
-          <td class="date-creation-col">${escapeHtml(formatarData(tipo.data_criacao))}</td>
-          <td class="created-by-col">${escapeHtml(tipo.nome_criado_por || '—')}</td>
           <td class="actions-col">
             <div class="action-buttons">
-              <button type="button" class="btn-edit" data-action="edit" data-id="${tipo.id_tipo_item}" title="Editar">
+              <button type="button" class="btn-edit" data-action="edit" data-id="${local.id_local}" title="Editar">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </button>
-              <button type="button" class="btn-delete" data-action="delete" data-id="${tipo.id_tipo_item}" title="Excluir">
+              <button type="button" class="btn-delete" data-action="delete" data-id="${local.id_local}" title="Excluir">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <polyline points="3,6 5,6 21,6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                   <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -110,30 +103,30 @@ function renderizarTabela(lista = tiposFiltrados()) {
     .join('');
 }
 
-async function carregarTipos() {
+async function carregarLocais() {
   try {
-    const data = await api.get('/tipos-item/');
-    tiposCache = Array.isArray(data) ? data : [];
+    const data = await api.get('/locais/');
+    locaisCache = Array.isArray(data) ? data : [];
     renderizarTabela();
   } catch (error) {
-    showNotification(error.message || 'Não foi possível carregar os tipos.', 'error');
-    tiposCache = [];
+    showNotification(error.message || 'Não foi possível carregar os locais.', 'error');
+    locaisCache = [];
     renderizarTabela([]);
   }
 }
 
-function abrirModal(tipo = null) {
-  tipoEditandoId = tipo?.id_tipo_item ?? null;
-  if (tipoIdInput) tipoIdInput.value = tipoEditandoId ?? '';
+function abrirModal(local = null) {
+  localEditandoId = local?.id_local ?? null;
+  if (localIdInput) localIdInput.value = localEditandoId ?? '';
 
   if (modalTitle) {
-    modalTitle.textContent = tipo ? 'Editar Tipo de Item' : 'Adicionar Tipo de Item';
+    modalTitle.textContent = local ? 'Editar Local' : 'Adicionar Local';
   }
 
-  if (nomeInput) nomeInput.value = tipo?.nome || '';
-  if (categoriaSelect) categoriaSelect.value = tipo?.categoria || '';
-  if (descricaoInput) descricaoInput.value = tipo?.descricao || '';
-  if (statusSelect) statusSelect.value = tipo?.status || 'Ativo';
+  if (nomeInput) nomeInput.value = local?.nome || '';
+  if (setorInput) setorInput.value = local?.setor || '';
+  if (descricaoInput) descricaoInput.value = local?.descricao || '';
+  if (statusSelect) statusSelect.value = local?.status || 'Ativo';
 
   modal?.classList.add('active');
   nomeInput?.focus();
@@ -141,65 +134,61 @@ function abrirModal(tipo = null) {
 
 function fecharModal() {
   modal?.classList.remove('active');
-  tipoEditandoId = null;
+  localEditandoId = null;
   form?.reset();
-  if (tipoIdInput) tipoIdInput.value = '';
+  if (localIdInput) localIdInput.value = '';
   if (statusSelect) statusSelect.value = 'Ativo';
 }
 
-async function salvarTipo(event) {
+async function salvarLocal(event) {
   event.preventDefault();
 
   const nome = (nomeInput?.value || '').trim();
-  const categoria = (categoriaSelect?.value || '').trim();
+  const setor = (setorInput?.value || '').trim();
   const descricao = (descricaoInput?.value || '').trim();
   const status = statusSelect?.value || 'Ativo';
 
   if (nome.length < 2) {
-    showNotification('Informe um nome com pelo menos 2 caracteres.', 'warning');
-    return;
-  }
-  if (!categoria) {
-    showNotification('Selecione uma categoria.', 'warning');
+    showNotification('Informe um nome do local com pelo menos 2 caracteres.', 'warning');
     return;
   }
 
   const payload = {
     nome,
-    categoria,
+    setor: setor || null,
     descricao: descricao || null,
     status,
   };
 
   try {
-    if (tipoEditandoId) {
-      await api.put(`/tipos-item/${tipoEditandoId}`, payload);
-      showNotification('Tipo atualizado com sucesso!', 'success');
+    if (localEditandoId) {
+      await api.put(`/locais/${localEditandoId}`, payload);
+      showNotification('Local atualizado com sucesso!', 'success');
     } else {
-      await api.post('/tipos-item/', payload);
-      showNotification('Tipo cadastrado com sucesso!', 'success');
+      await api.post('/locais/', payload);
+      showNotification('Local cadastrado com sucesso!', 'success');
     }
     fecharModal();
-    await carregarTipos();
+    await carregarLocais();
   } catch (error) {
-    showNotification(error.message || 'Não foi possível salvar o tipo.', 'error');
+    showNotification(error.message || 'Não foi possível salvar o local.', 'error');
   }
 }
 
 function confirmarExclusao(id) {
-  const tipo = tiposCache.find((item) => Number(item.id_tipo_item) === Number(id));
-  const nome = tipo?.nome ? `"${tipo.nome}"` : 'este tipo';
+  const local = locaisCache.find((item) => Number(item.id_local) === Number(id));
+  const nome = local?.nome ? `"${local.nome}"` : 'este local';
 
   showConfirmModal(
-    'Excluir tipo de item',
+    'Excluir local',
     `Tem certeza que deseja excluir ${nome}? Esta ação não poderá ser desfeita.`,
     async () => {
       try {
-        await api.delete(`/tipos-item/${id}`);
-        showNotification('Tipo excluído com sucesso!', 'success');
-        await carregarTipos();
+        await api.delete(`/locais/${id}`);
+        showNotification('Local excluído com sucesso!', 'success');
+        await carregarLocais();
       } catch (error) {
-        showNotification(error.message || 'Não foi possível excluir o tipo.', 'error');
+        showNotification(error.message || 'Não foi possível excluir o local.', 'error');
       }
     },
     { confirmText: 'Sim, excluir', cancelText: 'Cancelar', danger: true }
@@ -246,35 +235,49 @@ function setupEventListeners() {
     greeting.textContent = `Olá, ${sessao.nome}`;
   }
 
-  document.getElementById('btn-adicionar-tipo')?.addEventListener('click', (e) => {
+  document.getElementById('btn-adicionar-local')?.addEventListener('click', (e) => {
     e.preventDefault();
     abrirModal();
   });
 
-  document.getElementById('btn-voltar-dashboard-tipos')?.addEventListener('click', (e) => {
+  document.getElementById('btn-voltar-dashboard')?.addEventListener('click', (e) => {
     e.preventDefault();
     window.location.href = DASHBOARD_URL;
   });
 
-  document.getElementById('btn-cancelar-tipo')?.addEventListener('click', fecharModal);
-  document.getElementById('close-tipo')?.addEventListener('click', fecharModal);
+  document.getElementById('btn-cancelar-local')?.addEventListener('click', fecharModal);
+  document.getElementById('close-local')?.addEventListener('click', fecharModal);
 
   modal?.addEventListener('click', (e) => {
     if (e.target === modal) fecharModal();
   });
 
-  form?.addEventListener('submit', salvarTipo);
+  form?.addEventListener('submit', salvarLocal);
 
-  document.getElementById('btn-buscar-tipos')?.addEventListener('click', (e) => {
+  document.getElementById('btn-buscar')?.addEventListener('click', (e) => {
     e.preventDefault();
     renderizarTabela();
   });
 
-  document.getElementById('btn-limpar-tipos')?.addEventListener('click', (e) => {
+  document.getElementById('btn-limpar')?.addEventListener('click', (e) => {
     e.preventDefault();
     if (filtroNome) filtroNome.value = '';
-    if (filtroCategoria) filtroCategoria.value = '';
+    if (filtroSetor) filtroSetor.value = '';
     renderizarTabela();
+  });
+
+  filtroNome?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      renderizarTabela();
+    }
+  });
+
+  filtroSetor?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      renderizarTabela();
+    }
   });
 
   tbody?.addEventListener('click', (e) => {
@@ -285,8 +288,8 @@ function setupEventListeners() {
     if (!id) return;
 
     if (btn.dataset.action === 'edit') {
-      const tipo = tiposCache.find((item) => Number(item.id_tipo_item) === id);
-      if (tipo) abrirModal(tipo);
+      const local = locaisCache.find((item) => Number(item.id_local) === id);
+      if (local) abrirModal(local);
       return;
     }
 
@@ -329,6 +332,6 @@ function setupEventListeners() {
 
 setupEventListeners();
 initTheme();
-carregarTipos();
+carregarLocais();
 
-export { carregarTipos };
+export { carregarLocais };

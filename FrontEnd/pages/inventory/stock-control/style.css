@@ -303,6 +303,24 @@ body {
     font-size: 0.82rem;
 }
 
+.tipo-badge {
+    display: inline-block;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.tipo-badge.entrada {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.tipo-badge.saida {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
 .itens-table-container {
     width: 100%;
     overflow-x: auto;
