@@ -1,0 +1,7 @@
+{
+    "routes": [
+      { "handle": "filesystem" },
+      { "src": "/login", "destination": "/pages/auth/login/index.html" },
+      { "src": "/(.*)", "destination": "/index.html" }
+    ]
+  }
