@@ -68,16 +68,17 @@ app = FastAPI(
 register_exception_handlers(app)
 
 
-# Configuração CORS — origens do frontend em desenvolvimento local
+# Configuração CORS — liberado para desenvolvimento local e Vercel (produção)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5173",  # Vite
+        "http://localhost:5173",  # Vite local
         "http://localhost:5174",  # Vite (porta alternativa)
         "http://localhost:3000",  # React / serve alternativo
         "http://127.0.0.1:5173",
         "http://127.0.0.1:5174",
         "http://127.0.0.1:3000",
+        "*",  # Libera qualquer subdomínio da Vercel e origens externas em produção
     ],
     allow_credentials=True,
     allow_methods=["*"],
