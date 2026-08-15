@@ -29,7 +29,7 @@ class OcorrenciaService:
     ) -> OcorrenciaResponse:
         """Cria uma nova ocorrência"""
         dados_dict = dados.model_dump()
-        # Enum → valor string para o Oracle
+        # Enum → valor string para o banco
         if hasattr(dados_dict.get("severidade"), "value"):
             dados_dict["severidade"] = dados_dict["severidade"].value
 

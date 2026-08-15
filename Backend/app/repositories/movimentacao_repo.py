@@ -191,7 +191,7 @@ class MovimentacaoRepository:
                 f"""
                 UPDATE {TABLE_ITENS}
                 SET QUANTIDADE = :quantidade,
-                    DATA_ALTERACAO = SYSTIMESTAMP,
+                    DATA_ALTERACAO = NOW(),
                     ALTERADO_POR = :alterado_por
                 WHERE ID_ITEM = :id
                 """,
@@ -216,7 +216,7 @@ class MovimentacaoRepository:
                         f"""
                         UPDATE {TABLE_SALDO}
                         SET QUANTIDADE = :quantidade,
-                            DATA_ALTERACAO = SYSTIMESTAMP,
+                            DATA_ALTERACAO = NOW(),
                             ALTERADO_POR = :alterado_por
                         WHERE ID_ITEM = :id_item AND ID_LOCAL = :id_local
                         """,
@@ -243,7 +243,6 @@ class MovimentacaoRepository:
                         },
                     )
 
-            id_var = cursor.var(int)
             cursor.execute(
                 f"""
                 INSERT INTO {TABLE_MOV}
@@ -252,7 +251,7 @@ class MovimentacaoRepository:
                 VALUES
                     (:id_item, :id_local_origem, :id_local_destino, :quantidade,
                      :tipo, :motivo, :setor_destino, :setor_origem, :criado_por)
-                RETURNING ID_MOVIMENTACAO INTO :id
+                RETURNING ID_MOVIMENTACAO
                 """,
                 {
                     'id_item': id_item,
@@ -264,7 +263,6 @@ class MovimentacaoRepository:
                     'setor_destino': setor_destino,
                     'setor_origem': setor_origem,
                     'criado_por': usuario_id,
-                    'id': id_var,
                 },
             )
-            return id_var.getvalue()[0]
+            return cursor.fetchone()[0]

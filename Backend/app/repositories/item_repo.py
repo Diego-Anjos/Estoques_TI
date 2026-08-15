@@ -11,7 +11,7 @@ TABLE_TIPOS = "ESTOQUES_TI_TIPOS_ITEM"
 TABLE_SALDO = "ESTOQUES_TI_ESTOQUE_SALDO"
 
 _SELECT = f"""
-    i.ID_ITEM, i.NOME, i.ID_TIPO_ITEM, NVL(t.NOME, i.TIPO) AS TIPO, i.DESCRICAO, i.QUANTIDADE, i.UNIDADE,
+    i.ID_ITEM, i.NOME, i.ID_TIPO_ITEM, COALESCE(t.NOME, i.TIPO) AS TIPO, i.DESCRICAO, i.QUANTIDADE, i.UNIDADE,
     i.ID_LOCAL, i.STATUS, i.DATA_CRIACAO, i.CRIADO_POR,
     i.DATA_ALTERACAO, i.ALTERADO_POR, l.NOME AS NOME_LOCAL
 """
@@ -85,11 +85,10 @@ class ItemRepository:
                 (NOME, ID_TIPO_ITEM, TIPO, DESCRICAO, QUANTIDADE, UNIDADE, ID_LOCAL, STATUS, CRIADO_POR)
             VALUES
                 (:nome, :id_tipo_item, :tipo, :descricao, :quantidade, :unidade, :id_local, :status, :criado_por)
-            RETURNING ID_ITEM INTO :id
+            RETURNING ID_ITEM
         """
 
         with get_cursor() as cursor:
-            id_var = cursor.var(int)
             quantidade = int(dados.get('quantidade') or 0)
             id_local = dados['id_local']
             id_tipo_item = dados['id_tipo_item']
@@ -104,9 +103,8 @@ class ItemRepository:
                 'id_local': id_local,
                 'status': dados.get('status') or 'Ativo',
                 'criado_por': usuario_id,
-                'id': id_var,
             })
-            novo_id = id_var.getvalue()[0]
+            novo_id = cursor.fetchone()[0]
             ItemRepository._upsert_saldo(cursor, novo_id, id_local, quantidade, usuario_id)
             return novo_id
 
@@ -196,7 +194,7 @@ class ItemRepository:
             if not campos:
                 return False
 
-            campos.append("DATA_ALTERACAO = SYSTIMESTAMP")
+            campos.append("DATA_ALTERACAO = NOW()")
             campos.append("ALTERADO_POR = :alterado_por")
 
             sql = f"UPDATE {TABLE_NAME} SET {', '.join(campos)} WHERE ID_ITEM = :id"

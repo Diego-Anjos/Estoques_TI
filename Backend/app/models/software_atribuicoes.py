@@ -1,34 +1,45 @@
-"""
-Model para tabela SOFTWARE_ATRIBUICOES
-"""
-from dataclasses import dataclass
+"""Model ORM — ESTOQUES_TI_ATRIBUICOES"""
+from datetime import date, datetime
 from typing import Optional
-from datetime import datetime, date
+
+from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, func
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.models.base import Base
 
 
-@dataclass
-class SoftwareAtribuicao:
-    """Representa a atribuição de uma licença a um usuário ou patrimônio"""
-    id_atribuicao: Optional[int] = None
-    id_pool: int = 0
-    id_usuario: Optional[int] = None
-    id_patrimonio: Optional[int] = None
-    data_atribuicao: date = None
-    data_remocao: Optional[date] = None
-    observacoes: Optional[str] = None
-    data_criacao: Optional[datetime] = None
-    criado_por: int = 0
-    
+class SoftwareAtribuicao(Base):
+    __tablename__ = "estoques_ti_atribuicoes"
+
+    id_atribuicao: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id_pool: Mapped[int] = mapped_column(
+        Integer, ForeignKey("estoques_ti_software_licencas.id_pool"), nullable=False
+    )
+    id_usuario: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey("estoques_ti_usuarios.id_usuario")
+    )
+    id_patrimonio: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey("estoques_ti_patrimonios.id_patrimonio")
+    )
+    data_atribuicao: Mapped[date] = mapped_column(Date, nullable=False)
+    data_remocao: Mapped[Optional[date]] = mapped_column(Date)
+    observacoes: Mapped[Optional[str]] = mapped_column(String(300))
+    data_criacao: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    criado_por: Mapped[int] = mapped_column(
+        Integer, ForeignKey("estoques_ti_usuarios.id_usuario"), nullable=False
+    )
+
     def to_dict(self) -> dict:
-        """Converte para dicionário"""
         return {
-            'id_atribuicao': self.id_atribuicao,
-            'id_pool': self.id_pool,
-            'id_usuario': self.id_usuario,
-            'id_patrimonio': self.id_patrimonio,
-            'data_atribuicao': self.data_atribuicao,
-            'data_remocao': self.data_remocao,
-            'observacoes': self.observacoes,
-            'data_criacao': self.data_criacao,
-            'criado_por': self.criado_por
+            "id_atribuicao": self.id_atribuicao,
+            "id_pool": self.id_pool,
+            "id_usuario": self.id_usuario,
+            "id_patrimonio": self.id_patrimonio,
+            "data_atribuicao": self.data_atribuicao,
+            "data_remocao": self.data_remocao,
+            "observacoes": self.observacoes,
+            "data_criacao": self.data_criacao,
+            "criado_por": self.criado_por,
         }

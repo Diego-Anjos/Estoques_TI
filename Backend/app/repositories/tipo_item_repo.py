@@ -43,7 +43,7 @@ def _gerar_codigo(nome: str) -> str:
 
 
 class TipoItemRepository:
-    """Repository para gerenciar tipos de item no banco de dados Oracle"""
+    """Repository para gerenciar tipos de item no PostgreSQL"""
 
     @staticmethod
     def criar(dados: Dict[str, Any], usuario_id: Optional[int] = None) -> int:
@@ -54,11 +54,10 @@ class TipoItemRepository:
                 (CODIGO, NOME, CATEGORIA, DESCRICAO, STATUS, SERIALIZADO, UNIDADE, CRIADO_POR)
             VALUES
                 (:codigo, :nome, :categoria, :descricao, :status, :serializado, :unidade, :criado_por)
-            RETURNING ID_TIPO_ITEM INTO :id
+            RETURNING ID_TIPO_ITEM
         """
 
         with get_cursor() as cursor:
-            id_var = cursor.var(int)
             cursor.execute(sql, {
                 'codigo': codigo,
                 'nome': dados['nome'],
@@ -68,9 +67,8 @@ class TipoItemRepository:
                 'serializado': dados.get('serializado', 'N'),
                 'unidade': dados.get('unidade', 'UN'),
                 'criado_por': usuario_id,
-                'id': id_var,
             })
-            return id_var.getvalue()[0]
+            return cursor.fetchone()[0]
 
     @staticmethod
     def buscar_por_id(tipo_item_id: int) -> Optional[Dict[str, Any]]:
@@ -146,7 +144,7 @@ class TipoItemRepository:
         if not campos:
             return False
 
-        campos.append("DATA_ALTERACAO = SYSTIMESTAMP")
+        campos.append("DATA_ALTERACAO = NOW()")
         campos.append("ALTERADO_POR = :alterado_por")
 
         sql = f"UPDATE {TABLE_NAME} SET {', '.join(campos)} WHERE ID_TIPO_ITEM = :id"

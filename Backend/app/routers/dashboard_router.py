@@ -44,10 +44,9 @@ def obter_estatisticas():
                 """
                 SELECT
                     (SELECT COUNT(*) FROM ESTOQUES_TI_MOVIMENTACOES
-                     WHERE TRUNC(DATA_CRIACAO) = TRUNC(SYSDATE))
+                     WHERE DATA_CRIACAO::date = CURRENT_DATE)
                   + (SELECT COUNT(*) FROM ESTOQUES_TI_OCORRENCIAS
-                     WHERE TRUNC(DATA_ABERTURA) = TRUNC(SYSDATE))
-                FROM DUAL
+                     WHERE DATA_ABERTURA::date = CURRENT_DATE)
                 """
             )
             atividades_hoje = int(cursor.fetchone()[0])

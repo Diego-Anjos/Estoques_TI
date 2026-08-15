@@ -1,5 +1,5 @@
 """
-Models - Classes de domínio que representam as tabelas do banco Oracle
+Models - Classes ORM SQLAlchemy que representam as tabelas do banco PostgreSQL
 """
 from app.models.usuarios import Usuario
 from app.models.locais import Local
@@ -14,19 +14,21 @@ from app.models.software_licencas_pool import SoftwareLicencaPool
 from app.models.software_atribuicoes import SoftwareAtribuicao
 from app.models.ocorrencias import Ocorrencia
 from app.models.configuracao import ConfiguracaoSistema
+from app.models.base import Base
 
 __all__ = [
-    'Usuario',
-    'Local',
-    'TipoItem',
-    'Item',
-    'EstoqueSaldo',
-    'EstoqueMovimentacao',
-    'Patrimonio',
-    'PatrimonioAtributo',
-    'Software',
-    'SoftwareLicencaPool',
-    'SoftwareAtribuicao',
-    'Ocorrencia',
-    'ConfiguracaoSistema',
+    "Base",
+    "Usuario",
+    "Local",
+    "TipoItem",
+    "Item",
+    "EstoqueSaldo",
+    "EstoqueMovimentacao",
+    "Patrimonio",
+    "PatrimonioAtributo",
+    "Software",
+    "SoftwareLicencaPool",
+    "SoftwareAtribuicao",
+    "Ocorrencia",
+    "ConfiguracaoSistema",
 ]

@@ -5,7 +5,7 @@ from typing import List, Optional, Dict, Any
 from app.core.database import get_cursor
 
 
-# Nome da tabela no banco Oracle
+# Nome da tabela no PostgreSQL
 TABLE_NAME = "ESTOQUES_TI_ESTOQUE_SALDO"
 TABLE_ITENS = "ESTOQUES_TI_ITENS"
 
@@ -19,20 +19,18 @@ class EstoqueRepository:
         sql = f"""
             INSERT INTO {TABLE_NAME} (ITEM_ID, QUANTIDADE, QUANTIDADE_MINIMA, LOCALIZACAO, CRIADO_POR)
             VALUES (:item_id, :quantidade, :quantidade_minima, :localizacao, :criado_por)
-            RETURNING ID INTO :id
+            RETURNING ID
         """
         
         with get_cursor() as cursor:
-            id_var = cursor.var(int)
             cursor.execute(sql, {
                 'item_id': dados['item_id'],
                 'quantidade': dados.get('quantidade', 0),
                 'quantidade_minima': dados.get('quantidade_minima', 0),
                 'localizacao': dados.get('localizacao'),
                 'criado_por': usuario_id,
-                'id': id_var
             })
-            return id_var.getvalue()[0]
+            return cursor.fetchone()[0]
     
     @staticmethod
     def buscar_por_id(estoque_id: int) -> Optional[Dict[str, Any]]:

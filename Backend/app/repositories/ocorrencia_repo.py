@@ -57,10 +57,9 @@ class OcorrenciaRepository:
                 :id_usuario_abriu, :id_usuario_solicitante,
                 :id_usuario_relacionado, :id_patrimonio_relacionado, :alterado_por
             )
-            RETURNING ID_OCORRENCIA INTO :id
+            RETURNING ID_OCORRENCIA
         """
         with get_cursor() as cursor:
-            id_var = cursor.var(int)
             cursor.execute(
                 sql,
                 {
@@ -73,10 +72,9 @@ class OcorrenciaRepository:
                     "id_usuario_relacionado": dados.get("id_usuario_relacionado"),
                     "id_patrimonio_relacionado": dados.get("id_patrimonio_relacionado"),
                     "alterado_por": usuario_id,
-                    "id": id_var,
                 },
             )
-            return id_var.getvalue()[0]
+            return cursor.fetchone()[0]
 
     @staticmethod
     def buscar_por_id(ocorrencia_id: int) -> Optional[Dict[str, Any]]:
@@ -164,9 +162,9 @@ class OcorrenciaRepository:
         # Ao marcar como FECHADA/RESOLVIDA, registra data de fechamento se ainda vazia
         status_valor = params.get("status")
         if status_valor in ("FECHADA", "RESOLVIDA"):
-            campos.append("DATA_FECHAMENTO = NVL(DATA_FECHAMENTO, SYSTIMESTAMP)")
+            campos.append("DATA_FECHAMENTO = COALESCE(DATA_FECHAMENTO, NOW())")
 
-        campos.append("DATA_ALTERACAO = SYSTIMESTAMP")
+        campos.append("DATA_ALTERACAO = NOW()")
         campos.append("ALTERADO_POR = :alterado_por")
 
         sql = f"UPDATE {TABLE_NAME} SET {', '.join(campos)} WHERE ID_OCORRENCIA = :id"
@@ -181,11 +179,11 @@ class OcorrenciaRepository:
         """Altera apenas o status da ocorrência."""
         campos = [
             "STATUS = :status",
-            "DATA_ALTERACAO = SYSTIMESTAMP",
+            "DATA_ALTERACAO = NOW()",
             "ALTERADO_POR = :alterado_por",
         ]
         if status in ("FECHADA", "RESOLVIDA"):
-            campos.append("DATA_FECHAMENTO = NVL(DATA_FECHAMENTO, SYSTIMESTAMP)")
+            campos.append("DATA_FECHAMENTO = COALESCE(DATA_FECHAMENTO, NOW())")
         elif status in STATUS_ABERTOS:
             campos.append("DATA_FECHAMENTO = NULL")
 
@@ -220,8 +218,8 @@ class OcorrenciaRepository:
                         WHEN DESCRICAO IS NULL THEN :resolucao
                         ELSE DESCRICAO || CHR(10) || '[Fechamento] ' || :resolucao
                     END,
-                    DATA_FECHAMENTO = SYSTIMESTAMP,
-                    DATA_ALTERACAO = SYSTIMESTAMP,
+                    DATA_FECHAMENTO = NOW(),
+                    DATA_ALTERACAO = NOW(),
                     ALTERADO_POR = :alterado_por
                 WHERE ID_OCORRENCIA = :id
             """
@@ -234,8 +232,8 @@ class OcorrenciaRepository:
             sql = f"""
                 UPDATE {TABLE_NAME}
                 SET STATUS = 'FECHADA',
-                    DATA_FECHAMENTO = SYSTIMESTAMP,
-                    DATA_ALTERACAO = SYSTIMESTAMP,
+                    DATA_FECHAMENTO = NOW(),
+                    DATA_ALTERACAO = NOW(),
                     ALTERADO_POR = :alterado_por
                 WHERE ID_OCORRENCIA = :id
             """

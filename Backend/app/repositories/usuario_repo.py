@@ -5,12 +5,12 @@ from typing import List, Optional, Dict, Any
 from app.core.database import get_cursor
 from app.core.security import hash_password
 
-# Nome da tabela no banco Oracle
+# Nome da tabela no PostgreSQL
 TABLE_NAME = "ESTOQUES_TI_USUARIOS"
 
 
 class UsuarioRepository:
-    """Repository para gerenciar usuários no banco de dados Oracle"""
+    """Repository para gerenciar usuários no PostgreSQL"""
     
     @staticmethod
     def criar(dados: Dict[str, Any], usuario_id: Optional[int] = None) -> int:
@@ -20,11 +20,10 @@ class UsuarioRepository:
         sql = f"""
             INSERT INTO {TABLE_NAME} (NOME, EMAIL, SENHA_HASH, CARGO, ATIVO, CRIADO_POR)
             VALUES (:nome, :email, :senha_hash, :cargo, :ativo, :criado_por)
-            RETURNING ID_USUARIO INTO :id
+            RETURNING ID_USUARIO
         """
         
         with get_cursor() as cursor:
-            id_var = cursor.var(int)
             cursor.execute(sql, {
                 'nome': dados['nome'],
                 'email': dados['email'],
@@ -32,9 +31,8 @@ class UsuarioRepository:
                 'cargo': dados.get('cargo') or None,
                 'ativo': dados.get('ativo', 'S'),
                 'criado_por': usuario_id,
-                'id': id_var
             })
-            return id_var.getvalue()[0]
+            return cursor.fetchone()[0]
     
     @staticmethod
     def buscar_por_id(usuario_id: int) -> Optional[Dict[str, Any]]:
@@ -127,10 +125,10 @@ class UsuarioRepository:
 
         where_sql = f"WHERE {' AND '.join(where)}" if where else ""
 
-        # Oracle: paginação via OFFSET/FETCH (12c+)
+        # Paginação PostgreSQL
         pagination_sql = ""
         if limit is not None:
-            pagination_sql = " OFFSET :skip ROWS FETCH NEXT :limit ROWS ONLY"
+            pagination_sql = " LIMIT :limit OFFSET :skip"
             params["skip"] = max(0, int(skip))
             params["limit"] = max(1, int(limit))
 
@@ -233,7 +231,7 @@ class UsuarioRepository:
         if not campos:
             return False
         
-        campos.append("DATA_ALTERACAO = SYSTIMESTAMP")
+        campos.append("DATA_ALTERACAO = NOW()")
         campos.append("ALTERADO_POR = :alterado_por")
         
         sql = f"UPDATE {TABLE_NAME} SET {', '.join(campos)} WHERE ID_USUARIO = :id"
@@ -258,7 +256,7 @@ class UsuarioRepository:
                 CARGO = :cargo,
                 SENHA_HASH = :senha_hash,
                 ATIVO = 'S',
-                DATA_ALTERACAO = SYSTIMESTAMP,
+                DATA_ALTERACAO = NOW(),
                 ALTERADO_POR = :alterado_por
             WHERE ID_USUARIO = :id
               AND ATIVO = 'N'

@@ -4,7 +4,7 @@ Repository para operações de banco de dados relacionadas a Locais
 from typing import List, Optional, Dict, Any
 from app.core.database import get_cursor
 
-# Nome da tabela no banco Oracle
+# Nome da tabela no PostgreSQL
 TABLE_NAME = "ESTOQUES_TI_LOCAIS"
 
 _SELECT_COLS = """
@@ -28,7 +28,7 @@ def _row_to_dict(row) -> Dict[str, Any]:
 
 
 class LocalRepository:
-    """Repository para gerenciar locais no banco de dados Oracle"""
+    """Repository para gerenciar locais no PostgreSQL"""
 
     @staticmethod
     def criar(dados: Dict[str, Any], usuario_id: Optional[int] = None) -> int:
@@ -36,20 +36,18 @@ class LocalRepository:
         sql = f"""
             INSERT INTO {TABLE_NAME} (NOME, SETOR, DESCRICAO, STATUS, CRIADO_POR)
             VALUES (:nome, :setor, :descricao, :status, :criado_por)
-            RETURNING ID_LOCAL INTO :id
+            RETURNING ID_LOCAL
         """
 
         with get_cursor() as cursor:
-            id_var = cursor.var(int)
             cursor.execute(sql, {
                 'nome': dados['nome'],
                 'setor': dados.get('setor'),
                 'descricao': dados.get('descricao'),
                 'status': dados.get('status') or 'Ativo',
                 'criado_por': usuario_id,
-                'id': id_var,
             })
-            return id_var.getvalue()[0]
+            return cursor.fetchone()[0]
 
     @staticmethod
     def buscar_por_id(local_id: int) -> Optional[Dict[str, Any]]:
@@ -148,7 +146,7 @@ class LocalRepository:
         if not campos:
             return False
 
-        campos.append("DATA_ALTERACAO = SYSTIMESTAMP")
+        campos.append("DATA_ALTERACAO = NOW()")
         campos.append("ALTERADO_POR = :alterado_por")
 
         sql = f"UPDATE {TABLE_NAME} SET {', '.join(campos)} WHERE ID_LOCAL = :id"

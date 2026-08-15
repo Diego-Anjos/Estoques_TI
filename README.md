@@ -31,8 +31,8 @@ O **Estoques TI** nasceu da necessidade de modernizar e organizar o fluxo de equ
 - **Design Responsivo & Tema Escuro/Claro**
 
 ### Banco de Dados & Infra
-- **Oracle Database**
-- **Docker & Docker Compose**
+- **PostgreSQL (Supabase)**
+- **SQLAlchemy + psycopg2**
 
 ---
 
@@ -53,13 +53,20 @@ git clone [https://github.com/Diego-Anjos/Estoques_TI.git](https://github.com/Di
 cd "Estoques TI"
 ```
 
-**2. Suba o Banco de Dados Oracle (Docker)**
-Abra o seu terminal (Git Bash ou PowerShell) e rode:
+**2. Configure o PostgreSQL (Supabase)**
+1. Crie um projeto no [Supabase](https://supabase.com/)
+2. Copie a Connection String (URI) em **Settings → Database**
+3. Em `Backend/.env`, defina:
+```env
+DATABASE_URL=postgresql://postgres:SUA_SENHA@db.xxxx.supabase.co:5432/postgres
+JWT_SECRET_KEY=sua_chave_secreta_longa
+```
+4. Instale as dependências e crie as tabelas:
 ```bash
 cd Backend
-docker-compose up -d
+pip install -r requirements.txt
+python init_db.py
 ```
-*Aguarde alguns instantes até o banco Oracle inicializar por completo.*
 
 **3. Rode a API (Backend)**
 > ⚠️ **Atenção (Usuários de Windows):** É muito importante configurar o encoding para UTF-8 no terminal para evitar travamentos durante a inicialização (devido a emojis e caracteres especiais).

@@ -59,7 +59,7 @@ app = FastAPI(
     ### Recursos
     - ✅ Auditoria completa (criado/alterado por)
     - ✅ Validações de negócio
-    - ✅ Conexão com Oracle Database
+    - ✅ Conexão com PostgreSQL (Supabase)
     """,
     lifespan=lifespan
 )

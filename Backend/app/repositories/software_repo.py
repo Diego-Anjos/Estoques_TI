@@ -5,7 +5,7 @@ from typing import List, Optional, Dict, Any
 from app.core.database import get_cursor
 
 
-# Nome da tabela no banco Oracle
+# Nome da tabela no PostgreSQL
 TABLE_NAME = "ESTOQUES_TI_SOFTWARES"
 
 
@@ -22,11 +22,10 @@ class SoftwareRepository:
             VALUES (:nome, :fabricante, :versao, :tipo_licenca, :total_licencas,
                     :licencas_em_uso, :data_aquisicao, :data_expiracao,
                     :chave_licenca, :observacoes, :criado_por)
-            RETURNING ID INTO :id
+            RETURNING ID
         """
         
         with get_cursor() as cursor:
-            id_var = cursor.var(int)
             cursor.execute(sql, {
                 'nome': dados['nome'],
                 'fabricante': dados.get('fabricante'),
@@ -39,9 +38,8 @@ class SoftwareRepository:
                 'chave_licenca': dados.get('chave_licenca'),
                 'observacoes': dados.get('observacoes'),
                 'criado_por': usuario_id,
-                'id': id_var
             })
-            return id_var.getvalue()[0]
+            return cursor.fetchone()[0]
     
     @staticmethod
     def buscar_por_id(software_id: int) -> Optional[Dict[str, Any]]:

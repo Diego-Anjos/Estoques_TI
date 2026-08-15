@@ -94,7 +94,7 @@ class MovimentacaoResponse(BaseModel):
     @field_validator('quantidade', 'quantidade_atual', 'id_movimentacao', 'id_item', mode='before')
     @classmethod
     def coercer_numeros(cls, value):
-        """Oracle NUMBER / Decimal → int (evita falha de serialização)."""
+        """Garante int na serialização (evita Decimal do driver)."""
         if value is None:
             return value
         return int(value)

@@ -58,16 +58,22 @@ def validate_jwt_secret_key(secret: Optional[str]) -> str:
     return normalized
 
 
+def normalize_database_url(url: str) -> str:
+    """
+    SQLAlchemy exige o dialeto 'postgresql://'.
+    URLs do Heroku/Supabase às vezes vêm como 'postgres://'.
+    """
+    normalized = (url or "").strip()
+    if normalized.startswith("postgres://"):
+        normalized = "postgresql://" + normalized[len("postgres://") :]
+    return normalized
+
+
 class Settings(BaseSettings):
     """Configurações da aplicação"""
 
-    # Oracle Database (opcionais para permitir boot sem credenciais no Render)
-    ORACLE_USER: Optional[str] = None
-    ORACLE_PASSWORD: Optional[str] = None
-    ORACLE_DSN: Optional[str] = None
-    ORACLE_POOL_MIN: int = 1
-    ORACLE_POOL_MAX: int = 5
-    ORACLE_POOL_INC: int = 1
+    # PostgreSQL (Supabase / local) — obrigatório
+    DATABASE_URL: str = Field(..., description="URL de conexão PostgreSQL")
 
     # API
     API_TITLE: str = "Estoque TI API"
@@ -88,40 +94,50 @@ class Settings(BaseSettings):
     def jwt_secret_must_be_secure(cls, value: str) -> str:
         return validate_jwt_secret_key(value)
 
+    @field_validator("DATABASE_URL")
+    @classmethod
+    def database_url_must_be_set(cls, value: str) -> str:
+        if not value or not str(value).strip():
+            raise ValueError(
+                "DATABASE_URL não definida. Configure no Backend/.env "
+                "(veja Backend/.env.example)."
+            )
+        return normalize_database_url(value)
+
     @property
-    def oracle_configured(self) -> bool:
-        """Indica se as credenciais Oracle obrigatórias estão definidas."""
-        return bool(self.ORACLE_USER and self.ORACLE_PASSWORD and self.ORACLE_DSN)
+    def database_configured(self) -> bool:
+        """Indica se DATABASE_URL está definida."""
+        return bool(self.DATABASE_URL and self.DATABASE_URL.strip())
 
 
 def _load_settings() -> Settings:
     """
     Carrega settings do .env.
-    JWT_SECRET_KEY inválida/ausente aborta a inicialização com erro claro.
-    Falhas só de Oracle geram warning (banco pode ficar indisponível).
+    JWT_SECRET_KEY ou DATABASE_URL inválidas abortam a inicialização.
     """
     try:
         loaded = Settings()
     except Exception as exc:
         message = str(exc)
-        # Falha de JWT: abortar com mensagem no terminal
         if "JWT_SECRET_KEY" in message or "jwt" in message.lower():
             print(message, file=sys.stderr)
             raise SystemExit(1) from exc
 
-        # Outras falhas de parse: também não engolir JWT se vier aninhado
+        if "DATABASE_URL" in message:
+            print(
+                f"\nFalha ao carregar DATABASE_URL: {exc}\n"
+                "Defina DATABASE_URL no Backend/.env (PostgreSQL/Supabase).\n",
+                file=sys.stderr,
+            )
+            raise SystemExit(1) from exc
+
         print(
             f"\nFalha ao carregar configurações: {exc}\n"
-            "Verifique o arquivo Backend/.env (incluindo JWT_SECRET_KEY).\n",
+            "Verifique o arquivo Backend/.env (incluindo JWT_SECRET_KEY e DATABASE_URL).\n",
             file=sys.stderr,
         )
         raise SystemExit(1) from exc
 
-    if not loaded.oracle_configured:
-        logger.warning(
-            "Variáveis Oracle (ORACLE_USER, ORACLE_PASSWORD, ORACLE_DSN) "
-            "não configuradas. A API subirá, mas o banco ficará indisponível."
-        )
     return loaded
 
 
