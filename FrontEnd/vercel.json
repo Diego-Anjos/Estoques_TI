@@ -1,7 +1,8 @@
 {
-    "routes": [
-      { "handle": "filesystem" },
-      { "src": "/login", "destination": "/pages/auth/login/index.html" },
-      { "src": "/(.*)", "destination": "/index.html" }
-    ]
-  }
+  "rewrites": [
+    { "source": "/", "destination": "/pages/auth/login/index.html" },
+    { "source": "/login", "destination": "/pages/auth/login/index.html" },
+    { "source": "/register", "destination": "/pages/auth/register/index.html" },
+    { "source": "/dashboard", "destination": "/pages/auth/dashboard/paginainicial/index.html" }
+  ]
+}
