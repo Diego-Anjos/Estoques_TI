@@ -154,36 +154,16 @@
                 </div>
                 <div class="form-group hidden" id="grupo-setor-destino">
                     <label for="setor-destino">Setor de Destino:</label>
-                    <input
-                        type="text"
-                        id="setor-destino"
-                        name="setor-destino"
-                        list="setores-sugestoes"
-                        maxlength="80"
-                        placeholder="Ex: RH, Financeiro, Recepção"
-                        autocomplete="off"
-                    >
+                    <select id="setor-destino" name="setor-destino">
+                        <option value="">Selecione o setor</option>
+                    </select>
                 </div>
                 <div class="form-group hidden" id="grupo-setor-origem">
                     <label for="setor-origem">Setor de Origem:</label>
-                    <input
-                        type="text"
-                        id="setor-origem"
-                        name="setor-origem"
-                        list="setores-sugestoes"
-                        maxlength="80"
-                        placeholder="Ex: RH, Financeiro, Recepção"
-                        autocomplete="off"
-                    >
+                    <select id="setor-origem" name="setor-origem">
+                        <option value="">Selecione o setor</option>
+                    </select>
                 </div>
-                <datalist id="setores-sugestoes">
-                    <option value="RH"></option>
-                    <option value="Financeiro"></option>
-                    <option value="Recepção"></option>
-                    <option value="Comercial"></option>
-                    <option value="Operações"></option>
-                    <option value="Diretoria"></option>
-                </datalist>
                 <div class="form-group">
                     <label for="quantidade">Quantidade:</label>
                     <input type="number" id="quantidade" name="quantidade" min="1" required>

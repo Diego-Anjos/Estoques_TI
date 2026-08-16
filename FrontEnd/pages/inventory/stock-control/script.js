@@ -32,6 +32,7 @@ const grupoSetorOrigem = document.getElementById('grupo-setor-origem');
 const filtroItem = document.getElementById('filtro-item');
 const filtroTipo = document.getElementById('filtro-tipo');
 const greeting = document.getElementById('user-greeting');
+let setoresCache = [];
 
 function normalizarTipoUi(tipo) {
   return String(tipo || '')
@@ -203,6 +204,49 @@ function renderizarHistorico(lista = movimentacoesCache) {
     .join('');
 }
 
+function preencherSelectSetor(selectEl, valorAtual = '') {
+  if (!selectEl) return;
+
+  selectEl.innerHTML = '<option value="">Selecione o setor</option>';
+  setoresCache.forEach((setor) => {
+    const option = document.createElement('option');
+    option.value = setor;
+    option.textContent = setor;
+    selectEl.appendChild(option);
+  });
+
+  if (valorAtual && setoresCache.includes(valorAtual)) {
+    selectEl.value = valorAtual;
+  }
+}
+
+async function carregarOpcoesSetores() {
+  try {
+    const locais = await api.get('/locais/');
+    const lista = Array.isArray(locais) ? locais : [];
+    const setores = [
+      ...new Set(
+        lista
+          .map((local) => String(local.setor || '').trim())
+          .filter(Boolean)
+      ),
+    ].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+    setoresCache = setores;
+    preencherSelectSetor(setorDestinoInput);
+    preencherSelectSetor(setorOrigemInput);
+
+    if (!setores.length) {
+      showNotification('Cadastre setores nos locais para usá-los nas movimentações.', 'warning');
+    }
+  } catch (error) {
+    showNotification(error.message || 'Não foi possível carregar os setores dos locais.', 'error');
+    setoresCache = [];
+    preencherSelectSetor(setorDestinoInput);
+    preencherSelectSetor(setorOrigemInput);
+  }
+}
+
 async function carregarOpcoesItens() {
   if (!itemSelect) return;
 
@@ -369,7 +413,7 @@ function setupEventListeners() {
 
   document.getElementById('btn-adicionar-movimento')?.addEventListener('click', async (e) => {
     e.preventDefault();
-    await carregarOpcoesItens();
+    await Promise.all([carregarOpcoesItens(), carregarOpcoesSetores()]);
     abrirModal();
   });
 
@@ -442,6 +486,6 @@ function setupEventListeners() {
 
 setupEventListeners();
 initTheme();
-Promise.all([carregarOpcoesItens(), carregarMovimentacoes()]);
+Promise.all([carregarOpcoesItens(), carregarOpcoesSetores(), carregarMovimentacoes()]);
 
-export { carregarMovimentacoes, carregarOpcoesItens };
+export { carregarMovimentacoes, carregarOpcoesItens, carregarOpcoesSetores };
